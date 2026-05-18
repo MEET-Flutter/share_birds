@@ -1,0 +1,80 @@
+// lib/providers/settings_provider.dart
+// Riverpod notifiers for audio and app settings
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../domain/entities/audio_settings.dart';
+import '../domain/entities/app_settings.dart';
+import '../domain/repositories/settings_repository.dart';
+import 'repository_providers.dart';
+
+// ── Audio Settings Notifier ──────────────────────────────────────────────────
+
+class AudioSettingsNotifier extends AsyncNotifier<AudioSettings> {
+  SettingsRepository get _repo => ref.read(settingsRepositoryProvider);
+
+  @override
+  Future<AudioSettings> build() async {
+    return _repo.getAudioSettings();
+  }
+
+  Future<void> toggleLowLatency(bool v) async {
+    final current = state.valueOrNull ?? const AudioSettings();
+    final updated = current.copyWith(lowLatencyMode: v);
+    state = AsyncData(updated);
+    await _repo.saveAudioSettings(updated);
+  }
+
+  Future<void> toggleGainBoost(bool v) async {
+    final current = state.valueOrNull ?? const AudioSettings();
+    final updated = current.copyWith(gainBoost: v);
+    state = AsyncData(updated);
+    await _repo.saveAudioSettings(updated);
+  }
+
+  Future<void> toggleNoiseSuppression(bool v) async {
+    final current = state.valueOrNull ?? const AudioSettings();
+    final updated = current.copyWith(noiseSuppression: v);
+    state = AsyncData(updated);
+    await _repo.saveAudioSettings(updated);
+  }
+
+  Future<void> toggleEchoCancellation(bool v) async {
+    final current = state.valueOrNull ?? const AudioSettings();
+    final updated = current.copyWith(echoCancellation: v);
+    state = AsyncData(updated);
+    await _repo.saveAudioSettings(updated);
+  }
+}
+
+final audioSettingsProvider = AsyncNotifierProvider<AudioSettingsNotifier, AudioSettings>(
+  AudioSettingsNotifier.new,
+);
+
+// ── App Settings Notifier ────────────────────────────────────────────────────
+
+class AppSettingsNotifier extends AsyncNotifier<AppSettings> {
+  SettingsRepository get _repo => ref.read(settingsRepositoryProvider);
+
+  @override
+  Future<AppSettings> build() async {
+    return _repo.getAppSettings();
+  }
+
+  Future<void> toggleAnnounceTime(bool v) async {
+    final current = state.valueOrNull ?? const AppSettings();
+    final updated = current.copyWith(announceTime: v);
+    state = AsyncData(updated);
+    await _repo.saveAppSettings(updated);
+  }
+
+  Future<void> setAnnounceInterval(int minutes) async {
+    final current = state.valueOrNull ?? const AppSettings();
+    final updated = current.copyWith(announceIntervalMinutes: minutes);
+    state = AsyncData(updated);
+    await _repo.saveAppSettings(updated);
+  }
+}
+
+final appSettingsProvider = AsyncNotifierProvider<AppSettingsNotifier, AppSettings>(
+  AppSettingsNotifier.new,
+);

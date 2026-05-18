@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ========== PERMISSIONS ========== -->
+
+    <!-- Microphone access -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Bluetooth permissions (Android 12+) -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+
+    <!-- Foreground service -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+
+    <!-- Wake lock to keep CPU running in background -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Prevent battery optimization interference -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Vibration (for alerts) -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Post notifications (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Modify audio settings -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <!-- ========== APPLICATION ========== -->
+    <application
+        android:label="AudioShare Buds"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="true"
+        android:supportsRtl="true"
+        android:hardwareAccelerated="true">
+
+        <!-- ===== MAIN ACTIVITY ===== -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <meta-data
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- ===== AUDIO SHARING FOREGROUND SERVICE ===== -->
+        <!-- microphone foreground service type requires FOREGROUND_SERVICE_MICROPHONE permission -->
+        <service
+            android:name=".AudioSharingService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+
+        <!-- flutter_foreground_task notification receiver -->
+        <receiver
+            android:name="com.pravera.flutter_foreground_task.receiver.TaskRemoveActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.pravera.flutter_foreground_task.removeTask" />
+            </intent-filter>
+        </receiver>
+
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+
+    <!-- Intent queries for text processing -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <data android:mimeType="text/plain" />
+        </intent>
+    </queries>
+
+</manifest>
