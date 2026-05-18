@@ -1,5 +1,4 @@
 package com.example.share_birds
-
 import android.content.Context
 import android.content.Intent
 import android.os.Build
