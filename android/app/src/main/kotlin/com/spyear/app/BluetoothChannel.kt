@@ -35,6 +35,47 @@ class BluetoothChannel(private val context: Context) :
     private var eventSink: EventChannel.EventSink? = null
     private var btReceiver: BroadcastReceiver? = null
 
+    private var a2dpProfile: BluetoothA2dp? = null
+    private var headsetProfile: BluetoothHeadset? = null
+
+    init {
+        try {
+            val btManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+            val adapter = btManager?.adapter
+            if (adapter != null) {
+                adapter.getProfileProxy(context, object : BluetoothProfile.ServiceListener {
+                    override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
+                        if (profile == BluetoothProfile.A2DP) {
+                            a2dpProfile = proxy as BluetoothA2dp
+                            eventSink?.success(getConnectedDeviceMap())
+                        }
+                    }
+                    override fun onServiceDisconnected(profile: Int) {
+                        if (profile == BluetoothProfile.A2DP) {
+                            a2dpProfile = null
+                            eventSink?.success(getConnectedDeviceMap())
+                        }
+                    }
+                }, BluetoothProfile.A2DP)
+
+                adapter.getProfileProxy(context, object : BluetoothProfile.ServiceListener {
+                    override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
+                        if (profile == BluetoothProfile.HEADSET) {
+                            headsetProfile = proxy as BluetoothHeadset
+                            eventSink?.success(getConnectedDeviceMap())
+                        }
+                    }
+                    override fun onServiceDisconnected(profile: Int) {
+                        if (profile == BluetoothProfile.HEADSET) {
+                            headsetProfile = null
+                            eventSink?.success(getConnectedDeviceMap())
+                        }
+                    }
+                }, BluetoothProfile.HEADSET)
+            }
+        } catch (_: Exception) {}
+    }
+
     // ── MethodChannel Handler ─────────────────────────────────────────────────
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -92,8 +133,13 @@ class BluetoothChannel(private val context: Context) :
         if (!adapter.isEnabled) return false
 
         return try {
-            val connectedDevices = adapter.getProfileConnectionState(BluetoothProfile.HEADSET)
-            connectedDevices == BluetoothProfile.STATE_CONNECTED ||
+            val headsetConnected = (try { if (hasBluetoothPermission()) headsetProfile?.connectedDevices?.isNotEmpty() == true else false } catch (_: SecurityException) { false })
+            val a2dpConnected = (try { if (hasBluetoothPermission()) a2dpProfile?.connectedDevices?.isNotEmpty() == true else false } catch (_: SecurityException) { false })
+            if (headsetConnected || a2dpConnected) return true
+
+            adapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothProfile.STATE_CONNECTED ||
+            adapter.getProfileConnectionState(BluetoothProfile.A2DP) == BluetoothProfile.STATE_CONNECTED ||
+            @Suppress("DEPRECATION")
             audioManager.isBluetoothA2dpOn
         } catch (e: SecurityException) {
             false
@@ -108,32 +154,27 @@ class BluetoothChannel(private val context: Context) :
         if (!adapter.isEnabled) return null
 
         return try {
-            // Check A2DP devices
-            val a2dpDevices = adapter.bondedDevices?.filter { device ->
-                adapter.getProfileConnectionState(BluetoothProfile.A2DP) ==
-                        BluetoothProfile.STATE_CONNECTED
-            }
+            val headsetDevice = try {
+                if (hasBluetoothPermission()) headsetProfile?.connectedDevices?.firstOrNull() else null
+            } catch (_: SecurityException) { null }
 
-            // Check headset (HFP/HSP)
-            val headsetDevices = adapter.bondedDevices?.filter { _ ->
-                adapter.getProfileConnectionState(BluetoothProfile.HEADSET) ==
-                        BluetoothProfile.STATE_CONNECTED
-            }
+            val a2dpDevice = try {
+                if (hasBluetoothPermission()) a2dpProfile?.connectedDevices?.firstOrNull() else null
+            } catch (_: SecurityException) { null }
 
-            val device = headsetDevices?.firstOrNull() ?: a2dpDevices?.firstOrNull()
+            val device = headsetDevice ?: a2dpDevice
             val isConnected = isBluetoothAudioConnected()
 
             if (device != null && isConnected) {
                 mapOf(
-                    "name"        to (device.name ?: "Unknown"),
+                    "name"        to (try { device.name } catch (_: SecurityException) { null } ?: "Bluetooth Device"),
                     "address"     to device.address,
                     "isConnected" to true,
-                    "type"        to if (headsetDevices?.isNotEmpty() == true) "headset" else "headphones"
+                    "type"        to if (headsetDevice != null) "headset" else "headphones"
                 )
             } else if (isConnected) {
-                // Audio connected but can't get device name
                 mapOf(
-                    "name"        to "Bluetooth Device",
+                    "name"        to "Bluetooth Audio Device",
                     "address"     to "",
                     "isConnected" to true,
                     "type"        to "headset"
@@ -156,7 +197,6 @@ class BluetoothChannel(private val context: Context) :
     private fun registerBtReceiver() {
         btReceiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context?, intent: Intent?) {
-                // Emit updated device state on BT changes
                 eventSink?.success(getConnectedDeviceMap())
             }
         }
