@@ -36,13 +36,17 @@ class AudioSharingNotifier extends Notifier<SharingState> {
     state = state.copyWith(status: SharingStatus.connecting, errorMessage: null);
 
     try {
-      // Enable Bluetooth SCO for low-latency headset audio routing
-      await _btRepo.enableBluetoothSco();
-      await Future.delayed(const Duration(milliseconds: 600));
-
       // Get audio settings for this session
       final audioSettings = ref.read(audioSettingsProvider).valueOrNull
           ?? const AudioSettings();
+
+      // Enable Bluetooth SCO for low-latency headset audio routing
+      if (audioSettings.useBluetoothMic) {
+        await _btRepo.enableBluetoothSco();
+        await Future.delayed(const Duration(milliseconds: 600));
+      } else {
+        await _btRepo.disableBluetoothSco();
+      }
 
       // Start native AudioRecord → AudioTrack foreground service
       await _audioRepo.startSharing(audioSettings);

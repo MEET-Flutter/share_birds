@@ -7,12 +7,14 @@ class AudioSettings {
   final bool gainBoost;
   final bool noiseSuppression;
   final bool echoCancellation;
+  final bool useBluetoothMic;
 
   const AudioSettings({
     this.lowLatencyMode   = true,
     this.gainBoost        = false,
     this.noiseSuppression = false,
     this.echoCancellation = false,
+    this.useBluetoothMic  = true,
   });
 
   AudioSettings copyWith({
@@ -20,12 +22,14 @@ class AudioSettings {
     bool? gainBoost,
     bool? noiseSuppression,
     bool? echoCancellation,
+    bool? useBluetoothMic,
   }) {
     return AudioSettings(
       lowLatencyMode:   lowLatencyMode   ?? this.lowLatencyMode,
       gainBoost:        gainBoost        ?? this.gainBoost,
       noiseSuppression: noiseSuppression ?? this.noiseSuppression,
       echoCancellation: echoCancellation ?? this.echoCancellation,
+      useBluetoothMic:  useBluetoothMic  ?? this.useBluetoothMic,
     );
   }
 
@@ -35,6 +39,7 @@ class AudioSettings {
     'gainBoost':        gainBoost,
     'noiseSuppression': noiseSuppression,
     'echoCancellation': echoCancellation,
+    'useBluetoothMic':  useBluetoothMic,
   };
 
   @override
@@ -44,8 +49,9 @@ class AudioSettings {
           lowLatencyMode   == other.lowLatencyMode &&
           gainBoost        == other.gainBoost &&
           noiseSuppression == other.noiseSuppression &&
-          echoCancellation == other.echoCancellation;
+          echoCancellation == other.echoCancellation &&
+          useBluetoothMic  == other.useBluetoothMic;
 
   @override
-  int get hashCode => Object.hash(lowLatencyMode, gainBoost, noiseSuppression, echoCancellation);
+  int get hashCode => Object.hash(lowLatencyMode, gainBoost, noiseSuppression, echoCancellation, useBluetoothMic);
 }

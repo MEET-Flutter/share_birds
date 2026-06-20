@@ -85,6 +85,7 @@ class AudioChannel(private val context: Context) :
             putExtra(AudioSharingService.EXTRA_GAIN_BOOST,     args?.get("gainBoost")        as? Boolean ?: false)
             putExtra(AudioSharingService.EXTRA_NOISE_SUPPRESS, args?.get("noiseSuppression") as? Boolean ?: false)
             putExtra(AudioSharingService.EXTRA_ECHO_CANCEL,    args?.get("echoCancellation") as? Boolean ?: false)
+            putExtra(AudioSharingService.EXTRA_USE_BLUETOOTH_MIC, args?.get("useBluetoothMic") as? Boolean ?: true)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent)
@@ -107,6 +108,7 @@ class AudioChannel(private val context: Context) :
             putExtra(AudioSharingService.EXTRA_GAIN_BOOST,     args?.get("gainBoost")        as? Boolean ?: false)
             putExtra(AudioSharingService.EXTRA_NOISE_SUPPRESS, args?.get("noiseSuppression") as? Boolean ?: false)
             putExtra(AudioSharingService.EXTRA_ECHO_CANCEL,    args?.get("echoCancellation") as? Boolean ?: false)
+            putExtra(AudioSharingService.EXTRA_USE_BLUETOOTH_MIC, args?.get("useBluetoothMic") as? Boolean ?: true)
         }
         context.startService(intent)
     }

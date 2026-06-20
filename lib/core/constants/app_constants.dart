@@ -60,6 +60,7 @@ class PrefKeys {
   static const String gainBoost         = 'gain_boost';
   static const String noiseSuppression  = 'noise_suppression';
   static const String echoCancellation  = 'echo_cancellation';
+  static const String useBluetoothMic   = 'use_bluetooth_mic';
   static const String announceTime      = 'announce_time';
   static const String announceInterval  = 'announce_interval';
 }

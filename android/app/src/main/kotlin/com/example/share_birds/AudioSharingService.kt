@@ -7,7 +7,9 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.media.AudioAttributes
+import android.media.AudioDeviceInfo
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioRecord
@@ -17,6 +19,8 @@ import android.media.audiofx.AcousticEchoCanceler
 import android.media.audiofx.AutomaticGainControl
 import android.media.audiofx.NoiseSuppressor
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
@@ -43,6 +47,7 @@ class AudioSharingService : Service() {
         const val EXTRA_GAIN_BOOST       = "gain_boost"
         const val EXTRA_NOISE_SUPPRESS   = "noise_suppression"
         const val EXTRA_ECHO_CANCEL      = "echo_cancellation"
+        const val EXTRA_USE_BLUETOOTH_MIC = "use_bluetooth_mic"
 
         private const val NOTIFICATION_ID  = 1001
         private const val CHANNEL_ID       = "audio_sharing_channel"
@@ -63,6 +68,7 @@ class AudioSharingService : Service() {
     private var gainBoost       = false
     private var noiseSuppression = false
     private var echoCancellation = false
+    private var useBluetoothMic = true
 
     // ── State ─────────────────────────────────────────────────────────────────
 
@@ -135,9 +141,36 @@ class AudioSharingService : Service() {
      * Using PERFORMANCE_MODE_LOW_LATENCY when lowLatencyMode is enabled.
      */
     private fun runAudioLoop() {
+        Log.i("AudioSharingService", "runAudioLoop started: useBluetoothMic=$useBluetoothMic, noiseSuppression=$noiseSuppression")
         val bufferSize = calculateBufferSize()
-        val audioRecord = buildAudioRecord(bufferSize) ?: return
+        val audioRecord = buildAudioRecord(bufferSize) ?: run {
+            Log.e("AudioSharingService", "Failed to build AudioRecord!")
+            return
+        }
+        
+        if (!useBluetoothMic) {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val cleared = audioManager.clearCommunicationDevice()
+                Log.i("AudioSharingService", "clearCommunicationDevice returned: $cleared")
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val devices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
+                Log.i("AudioSharingService", "Available input devices: ${devices.map { "${it.id}:${it.type}" }}")
+                val builtInMic = devices.firstOrNull { 
+                    it.type == AudioDeviceInfo.TYPE_BUILTIN_MIC
+                }
+                if (builtInMic != null) {
+                    val success = audioRecord.setPreferredDevice(builtInMic)
+                    Log.i("AudioSharingService", "setPreferredDevice(TYPE_BUILTIN_MIC) returned: $success")
+                } else {
+                    Log.e("AudioSharingService", "No TYPE_BUILTIN_MIC found in input devices!")
+                }
+            }
+        }
+
         val audioTrack  = buildAudioTrack(bufferSize)  ?: run {
+            Log.e("AudioSharingService", "Failed to build AudioTrack!")
             audioRecord.release(); return
         }
 
@@ -150,6 +183,12 @@ class AudioSharingService : Service() {
 
         try {
             audioRecord.startRecording()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Log.i("AudioSharingService", "Recording started. Initial routed device type: ${audioRecord.routedDevice?.type}")
+                audioRecord.addOnRoutingChangedListener({ recorder ->
+                    Log.i("AudioSharingService", "AudioRecord routing changed to device type: ${recorder?.routedDevice?.type}")
+                }, Handler(Looper.getMainLooper()))
+            }
             audioTrack.play()
 
             while (shouldRun.get()) {
@@ -186,10 +225,12 @@ class AudioSharingService : Service() {
     // ── AudioRecord Builder ────────────────────────────────────────────────────
 
     private fun buildAudioRecord(bufferSize: Int): AudioRecord? {
-        val audioSource = if (noiseSuppression)
-            MediaRecorder.AudioSource.VOICE_COMMUNICATION
-        else
-            MediaRecorder.AudioSource.MIC
+        val audioSource = if (useBluetoothMic) {
+            if (noiseSuppression) MediaRecorder.AudioSource.VOICE_COMMUNICATION
+            else MediaRecorder.AudioSource.MIC
+        } else {
+            MediaRecorder.AudioSource.CAMCORDER
+        }
 
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -221,10 +262,22 @@ class AudioSharingService : Service() {
                 else
                     AudioTrack.PERFORMANCE_MODE_NONE
 
+                val usage = if (useBluetoothMic) {
+                    AudioAttributes.USAGE_VOICE_COMMUNICATION
+                } else {
+                    AudioAttributes.USAGE_MEDIA
+                }
+
+                val contentType = if (useBluetoothMic) {
+                    AudioAttributes.CONTENT_TYPE_SPEECH
+                } else {
+                    AudioAttributes.CONTENT_TYPE_MUSIC
+                }
+
                 AudioTrack.Builder()
                     .setAudioAttributes(AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .setUsage(usage)
+                        .setContentType(contentType)
                         .build())
                     .setAudioFormat(AudioFormat.Builder()
                         .setEncoding(encoding)
@@ -236,9 +289,14 @@ class AudioSharingService : Service() {
                     .setPerformanceMode(performanceMode)
                     .build()
             } else {
+                val streamType = if (useBluetoothMic) {
+                    AudioManager.STREAM_VOICE_CALL
+                } else {
+                    AudioManager.STREAM_MUSIC
+                }
                 @Suppress("DEPRECATION")
                 AudioTrack(
-                    AudioManager.STREAM_VOICE_CALL,
+                    streamType,
                     sampleRate, channelOut, encoding, bufferSize,
                     AudioTrack.MODE_STREAM
                 )
@@ -291,6 +349,7 @@ class AudioSharingService : Service() {
         gainBoost       = intent.getBooleanExtra(EXTRA_GAIN_BOOST,     false)
         noiseSuppression = intent.getBooleanExtra(EXTRA_NOISE_SUPPRESS, false)
         echoCancellation = intent.getBooleanExtra(EXTRA_ECHO_CANCEL,    false)
+        useBluetoothMic  = intent.getBooleanExtra(EXTRA_USE_BLUETOOTH_MIC, true)
     }
 
     // ── Wake Lock ──────────────────────────────────────────────────────────────

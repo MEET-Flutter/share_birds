@@ -74,6 +74,9 @@ class BluetoothChannel(private val context: Context) :
         audioManager.stopBluetoothSco()
         @Suppress("DEPRECATION")
         audioManager.isBluetoothScoOn = false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            audioManager.clearCommunicationDevice()
+        }
         audioManager.mode = AudioManager.MODE_NORMAL
     }
 

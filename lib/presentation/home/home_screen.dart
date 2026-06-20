@@ -8,7 +8,9 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/audio_provider.dart';
 import '../../providers/bluetooth_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../domain/entities/sharing_state.dart';
+import '../../domain/entities/audio_settings.dart';
 import '../sharing/sharing_screen.dart';
 import '../settings/settings_screen.dart';
 import '../widgets/bt_device_card.dart';
@@ -94,6 +96,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final sharingState = ref.watch(audioSharingProvider);
     final btDevice     = ref.watch(bluetoothProvider).valueOrNull;
     final isLive       = sharingState.isLive;
+    final audioSettings = ref.watch(audioSettingsProvider).valueOrNull ?? const AudioSettings();
+    final useBluetoothMic = audioSettings.useBluetoothMic;
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
@@ -222,6 +226,112 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             BtDeviceCard(
               device: btDevice,
               onRefresh: () => ref.read(bluetoothProvider.notifier).refresh(),
+            ),
+            const SizedBox(height: 32),
+
+            // ── Microphone Source ──────────────────────────────────────────────
+            const Text(
+              'MICROPHONE SOURCE',
+              style: TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: isLive
+                          ? null
+                          : () => ref.read(audioSettingsProvider.notifier).toggleUseBluetoothMic(true),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: useBluetoothMic 
+                              ? AppColors.primary.withValues(alpha: isLive ? 0.08 : 0.15)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.bluetooth_audio_rounded,
+                              color: useBluetoothMic 
+                                  ? (isLive ? AppColors.primary.withValues(alpha: 0.5) : AppColors.primary)
+                                  : AppColors.textSecondary,
+                              size: 20,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'AirPods Mic',
+                              style: TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: useBluetoothMic 
+                                    ? (isLive ? AppColors.textPrimary.withValues(alpha: 0.6) : AppColors.textPrimary)
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: isLive
+                          ? null
+                          : () => ref.read(audioSettingsProvider.notifier).toggleUseBluetoothMic(false),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: !useBluetoothMic 
+                              ? AppColors.primary.withValues(alpha: isLive ? 0.08 : 0.15)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.phone_android_rounded,
+                              color: !useBluetoothMic 
+                                  ? (isLive ? AppColors.primary.withValues(alpha: 0.5) : AppColors.primary)
+                                  : AppColors.textSecondary,
+                              size: 20,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Phone Mic',
+                              style: TextStyle(
+                                fontFamily: 'Outfit',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: !useBluetoothMic 
+                                    ? (isLive ? AppColors.textPrimary.withValues(alpha: 0.6) : AppColors.textPrimary)
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 32),
 

@@ -77,6 +77,17 @@ class SettingsScreen extends ConsumerWidget {
                   ? (v) => audioNotifier.toggleEchoCancellation(v)
                   : null,
             ),
+            _Divider(),
+            _ToggleTile(
+              icon:    Icons.bluetooth_audio_rounded,
+              title:   'Use Bluetooth Microphone',
+              subtitle: 'Use headset mic; disable to use phone mic with high-quality playback',
+              color:   AppColors.primary,
+              value:   audioSettings?.useBluetoothMic ?? true,
+              onChanged: audioSettings != null
+                  ? (v) => audioNotifier.toggleUseBluetoothMic(v)
+                  : null,
+            ),
           ]),
           const SizedBox(height: 28),
 

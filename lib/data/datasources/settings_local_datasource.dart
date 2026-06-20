@@ -20,6 +20,7 @@ class SettingsLocalDatasource {
       gainBoost:        _prefs.getBool(PrefKeys.gainBoost)        ?? false,
       noiseSuppression: _prefs.getBool(PrefKeys.noiseSuppression) ?? false,
       echoCancellation: _prefs.getBool(PrefKeys.echoCancellation) ?? false,
+      useBluetoothMic:  _prefs.getBool(PrefKeys.useBluetoothMic)  ?? true,
     );
   }
 
@@ -29,6 +30,7 @@ class SettingsLocalDatasource {
       _prefs.setBool(PrefKeys.gainBoost,        s.gainBoost),
       _prefs.setBool(PrefKeys.noiseSuppression, s.noiseSuppression),
       _prefs.setBool(PrefKeys.echoCancellation, s.echoCancellation),
+      _prefs.setBool(PrefKeys.useBluetoothMic,  s.useBluetoothMic),
     ]);
   }
 

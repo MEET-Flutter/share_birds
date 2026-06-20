@@ -44,6 +44,13 @@ class AudioSettingsNotifier extends AsyncNotifier<AudioSettings> {
     state = AsyncData(updated);
     await _repo.saveAudioSettings(updated);
   }
+
+  Future<void> toggleUseBluetoothMic(bool v) async {
+    final current = state.valueOrNull ?? const AudioSettings();
+    final updated = current.copyWith(useBluetoothMic: v);
+    state = AsyncData(updated);
+    await _repo.saveAudioSettings(updated);
+  }
 }
 
 final audioSettingsProvider = AsyncNotifierProvider<AudioSettingsNotifier, AudioSettings>(
