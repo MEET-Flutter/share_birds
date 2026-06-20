@@ -1,0 +1,8 @@
+# Reference: https://docs.flutter.dev/deployment/android#signing-the-app
+# Copy this file to 'key.properties' in the same folder and fill in your signing details.
+# DO NOT commit the actual 'key.properties' file containing passwords to source control.
+
+storePassword=YOUR_KEYSTORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=YOUR_KEY_ALIAS
+storeFile=../app/YOUR_KEYSTORE_FILE.jks
