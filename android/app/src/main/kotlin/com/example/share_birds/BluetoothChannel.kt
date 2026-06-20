@@ -1,7 +1,9 @@
 package com.example.share_birds
 
 import android.Manifest
+import android.bluetooth.BluetoothA2dp
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHeadset
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
@@ -160,7 +162,11 @@ class BluetoothChannel(private val context: Context) :
         }
         val filter = IntentFilter().apply {
             addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
+            addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED)
             addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED)
+            addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED)
+            addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
+            addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
             addAction(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED)
         }
         context.registerReceiver(btReceiver, filter)

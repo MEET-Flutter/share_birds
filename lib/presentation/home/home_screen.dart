@@ -77,6 +77,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _handleStartSharing() async {
+    final isBtConnected = ref.read(isBluetoothConnectedProvider);
+    if (!isBtConnected) return;
+
     final granted = await _requestPermissions();
     if (!granted || !mounted) return;
 
@@ -95,6 +98,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget build(BuildContext context) {
     final sharingState = ref.watch(audioSharingProvider);
     final btDevice     = ref.watch(bluetoothProvider).valueOrNull;
+    final isBtConnected = ref.watch(isBluetoothConnectedProvider);
     final isLive       = sharingState.isLive;
     final audioSettings = ref.watch(audioSettingsProvider).valueOrNull ?? const AudioSettings();
     final useBluetoothMic = audioSettings.useBluetoothMic;
@@ -336,7 +340,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             const SizedBox(height: 32),
 
             // ── Start / Stop Button ───────────────────────────────────────────
-            _buildMainButton(sharingState),
+            _buildMainButton(sharingState, isBtConnected),
             const SizedBox(height: 16),
 
             // Subtitle hint
@@ -344,11 +348,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               child: Text(
                 isLive
                     ? 'Audio is streaming to your earbuds'
-                    : 'Tap to stream mic audio to your earbuds',
-                style: const TextStyle(
+                    : (isBtConnected
+                        ? 'Tap to stream mic audio to your earbuds'
+                        : 'Connect a Bluetooth device to start sharing'),
+                style: TextStyle(
                   fontFamily: 'Outfit',
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: isLive 
+                      ? AppColors.liveGreen 
+                      : (isBtConnected ? AppColors.textSecondary : AppColors.warningAmber),
                 ),
               ),
             ),
@@ -359,9 +367,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Widget _buildMainButton(SharingState state) {
+  Widget _buildMainButton(SharingState state, bool isBtConnected) {
     final isLive       = state.isLive;
     final isConnecting = state.isConnecting;
+    final isEnabled    = isLive || isBtConnected;
 
     return SizedBox(
       width: double.infinity,
@@ -369,27 +378,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         decoration: BoxDecoration(
-          gradient: isLive
-              ? const LinearGradient(
-                  colors: [AppColors.errorRed, Color(0xFFCC2233)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : AppColors.primaryGradient,
+          gradient: isEnabled
+              ? (isLive
+                  ? const LinearGradient(
+                      colors: [AppColors.errorRed, Color(0xFFCC2233)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : AppColors.primaryGradient)
+              : null,
+          color: isEnabled ? null : AppColors.surfaceElevated,
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: (isLive ? AppColors.errorRed : AppColors.primary)
-                  .withValues(alpha: 0.35),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          border: isEnabled ? null : Border.all(color: AppColors.border),
+          boxShadow: isEnabled
+              ? [
+                  BoxShadow(
+                    color: (isLive ? AppColors.errorRed : AppColors.primary)
+                        .withValues(alpha: 0.35),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : null,
         ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: isConnecting
+            onTap: (isConnecting || !isEnabled)
                 ? null
                 : (isLive
                     ? () => ref.read(audioSharingProvider.notifier).stopSharing()
@@ -409,17 +424,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       children: [
                         Icon(
                           isLive ? Icons.stop_rounded : Icons.play_arrow_rounded,
-                          color: Colors.white,
+                          color: isEnabled ? Colors.white : AppColors.textDisabled,
                           size: 26,
                         ),
                         const SizedBox(width: 10),
                         Text(
                           isLive ? 'Stop Sharing' : 'Start Sharing',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Outfit',
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            color: isEnabled ? Colors.white : AppColors.textDisabled,
                           ),
                         ),
                       ],
