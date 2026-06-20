@@ -33,9 +33,9 @@
 
     <!-- ========== APPLICATION ========== -->
     <application
-        android:label="AudioShare Buds"
+        android:label="SpyEar - Free Version"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/launcher_icon"
         android:allowBackup="true"
         android:supportsRtl="true"
         android:hardwareAccelerated="true">

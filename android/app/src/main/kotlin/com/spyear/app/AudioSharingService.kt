@@ -1,4 +1,4 @@
-package com.example.share_birds
+package com.spyear.app
 
 import android.app.Notification
 import android.app.NotificationChannel

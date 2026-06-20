@@ -1,5 +1,5 @@
 // lib/core/constants/app_theme.dart
-// Material 3 dark theme configuration for AudioShare Buds
+// Material 3 dark theme configuration for SpyEar
 
 import 'package:flutter/material.dart';
 import 'app_colors.dart';

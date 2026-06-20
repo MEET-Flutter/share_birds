@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.share_birds"
+    namespace = "com.spyear.app"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.share_birds"
+        applicationId = "com.spyear.app"
         minSdk = 26          // Android 8.0+ required for low-latency audio APIs
         targetSdk = 35
         versionCode = flutter.versionCode

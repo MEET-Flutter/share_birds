@@ -1,4 +1,4 @@
-package com.example.share_birds
+package com.spyear.app
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -14,10 +14,10 @@ import io.flutter.plugin.common.MethodChannel
  */
 class MainActivity : FlutterActivity() {
 
-    private val AUDIO_CHANNEL     = "com.example.share_birds/audio"
-    private val AUDIO_LEVEL_EVENT = "com.example.share_birds/audioLevel"
-    private val BT_CHANNEL        = "com.example.share_birds/bluetooth"
-    private val BT_STATE_EVENT    = "com.example.share_birds/btState"
+    private val AUDIO_CHANNEL     = "com.spyear.app/audio"
+    private val AUDIO_LEVEL_EVENT = "com.spyear.app/audioLevel"
+    private val BT_CHANNEL        = "com.spyear.app/bluetooth"
+    private val BT_STATE_EVENT    = "com.spyear.app/btState"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

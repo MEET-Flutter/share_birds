@@ -74,7 +74,7 @@ class SharingScreen extends ConsumerWidget {
                     color: AppColors.liveGreen,
                   )),
                   const SizedBox(width: 12),
-                  Expanded(child: _InfoCard(
+                  const Expanded(child: _InfoCard(
                     label: 'LATENCY MODE',
                     value: 'LOW',
                     icon: Icons.speed_rounded,

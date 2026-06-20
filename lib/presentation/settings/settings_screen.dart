@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../providers/settings_provider.dart';
-import '../../providers/tts_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -31,7 +30,7 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         children: [
           // ── Audio Quality ────────────────────────────────────────────────────
-          _SectionHeader(icon: Icons.tune_rounded, title: 'Audio Quality'),
+          const _SectionHeader(icon: Icons.tune_rounded, title: 'Audio Quality'),
           const SizedBox(height: 12),
           _SettingsCard(children: [
             _ToggleTile(
@@ -92,7 +91,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 28),
 
           // ── Time Announcements ───────────────────────────────────────────────
-          _SectionHeader(icon: Icons.access_time_rounded, title: 'Time Announcements'),
+          const _SectionHeader(icon: Icons.access_time_rounded, title: 'Time Announcements'),
           const SizedBox(height: 12),
           _SettingsCard(children: [
             _ToggleTile(
@@ -160,7 +159,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 28),
 
           // ── About ────────────────────────────────────────────────────────────
-          _SectionHeader(icon: Icons.info_outline_rounded, title: 'About'),
+          const _SectionHeader(icon: Icons.info_outline_rounded, title: 'About'),
           const SizedBox(height: 12),
           _SettingsCard(children: [
             Padding(
@@ -179,7 +178,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: 12),
                     const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('AudioShare Buds',
+                      Text('SpyEar',
                           style: TextStyle(fontFamily: 'Outfit', fontSize: 16,
                               fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                       Text('Version 1.0.0',

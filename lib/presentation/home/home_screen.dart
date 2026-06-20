@@ -61,7 +61,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         context: context,
         builder: (_) => PermissionDialog(
           title:          'Microphone Required',
-          description:    'AudioShare Buds needs microphone access to stream live audio to your Bluetooth earbuds.',
+          description:    'SpyEar needs microphone access to stream live audio to your Bluetooth earbuds.',
           permissionName: 'Microphone',
           icon:           Icons.mic_rounded,
           onGrant:        () async {
@@ -119,7 +119,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               child: const Icon(Icons.headphones_rounded, color: Colors.black, size: 18),
             ),
             const SizedBox(width: 10),
-            const Text('AudioShare Buds'),
+            const Text('SpyEar'),
           ],
         ),
         actions: [

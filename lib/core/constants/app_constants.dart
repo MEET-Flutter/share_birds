@@ -1,12 +1,12 @@
 // lib/core/constants/app_constants.dart
-// App-wide constants for AudioShare Buds
+// App-wide constants for SpyEar
 
 /// Channel names for native platform communication
 class ChannelNames {
   ChannelNames._();
 
-  static const String audio     = 'com.example.share_birds/audio';
-  static const String bluetooth = 'com.example.share_birds/bluetooth';
+  static const String audio     = 'com.spyear.app/audio';
+  static const String bluetooth = 'com.spyear.app/bluetooth';
 }
 
 /// Method names for audio platform channel
@@ -35,8 +35,8 @@ class BluetoothMethods {
 class EventChannelNames {
   EventChannelNames._();
 
-  static const String audioLevel  = 'com.example.share_birds/audioLevel';
-  static const String btState     = 'com.example.share_birds/btState';
+  static const String audioLevel  = 'com.spyear.app/audioLevel';
+  static const String btState     = 'com.spyear.app/btState';
 }
 
 /// Time announcement intervals in minutes
@@ -73,7 +73,7 @@ class NotificationConfig {
   static const String channelId        = 'audio_sharing_channel';
   static const String channelName      = 'Audio Sharing';
   static const String channelDesc      = 'Live audio sharing foreground service';
-  static const String title            = 'AudioShare Buds';
+  static const String title            = 'SpyEar';
   static const String contentText      = '🎧 Audio sharing is active';
   static const String stopAction       = 'STOP_SHARING';
 }

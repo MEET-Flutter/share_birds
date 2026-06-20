@@ -1,5 +1,5 @@
 // lib/main.dart
-// AudioShare Buds — App Entry Point
+// SpyEar — App Entry Point
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,9 +22,9 @@ void main() async {
 
   // Status bar styling for immersive dark look
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor:            Colors.transparent,
-    statusBarIconBrightness:   Brightness.light,
-    systemNavigationBarColor:  Color(0xFF080C14),
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    systemNavigationBarColor: Color(0xFF080C14),
     systemNavigationBarIconBrightness: Brightness.light,
   ));
 
@@ -51,13 +51,15 @@ class AudioShareBudsApp extends ConsumerWidget {
     ref.watch(ttsEngineProvider);
     ref.watch(timeAnnouncementProvider);
 
-    return MaterialApp(
-      title: 'AudioShare Buds',
-      debugShowCheckedModeBanner: false,
-      theme:      AppTheme.darkTheme,
-      darkTheme:  AppTheme.darkTheme,
-      themeMode:  ThemeMode.dark,
-      home: const HomeScreen(),
+    return SafeArea(
+      child: MaterialApp(
+        title: 'SpyEar',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.darkTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.dark,
+        home: const HomeScreen(),
+      ),
     );
   }
 }

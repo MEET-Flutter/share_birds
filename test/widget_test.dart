@@ -1,7 +1,6 @@
 // test/widget_test.dart
-// Smoke and layout test for AudioShare Buds application
+// Smoke and layout test for SpyEar application
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,36 +13,36 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
-    // ── Mock Platform Channels to prevent MissingPluginException ────────────
-    
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
     // Audio Platform Channel Mock
-    const MethodChannel('com.example.share_birds/audio')
-        .setMockMethodCallHandler((MethodCall methodCall) async {
-      if (methodCall.method == 'isSharing') return false;
-      return null;
-    });
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('com.spyear.app/audio'),
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'isSharing') return false;
+        return null;
+      },
+    );
 
     // Bluetooth Platform Channel Mock
-    const MethodChannel('com.example.share_birds/bluetooth')
-        .setMockMethodCallHandler((MethodCall methodCall) async {
-      if (methodCall.method == 'getConnectedDevice') return null;
-      return null;
-    });
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('com.spyear.app/bluetooth'),
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'getConnectedDevice') return null;
+        return null;
+      },
+    );
 
     // Text to Speech Mock
-    const MethodChannel('flutter_tts')
-        .setMockMethodCallHandler((MethodCall methodCall) async {
-      return null;
-    });
-
-    // System Navigation Bar Mock
-    const MethodChannel('flutter/platform')
-        .setMockMethodCallHandler((MethodCall methodCall) async {
-      return null;
-    });
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('flutter_tts'),
+      (MethodCall methodCall) async {
+        return null;
+      },
+    );
   });
 
-  testWidgets('AudioShare Buds App Launches and Renders Successfully', (WidgetTester tester) async {
+  testWidgets('SpyEar App Launches and Renders Successfully', (WidgetTester tester) async {
     // Mock initial preferences
     SharedPreferences.setMockInitialValues({
       'low_latency_mode': true,
@@ -64,12 +63,12 @@ void main() {
     );
 
     // Trigger initial state frames
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     // Verify key UI text items are rendered
-    expect(find.text('AudioShare Buds'), findsWidgets);
-    expect(find.text('Live Audio Monitor'), findsOneWidget);
+    expect(find.text('SpyEar'), findsWidgets);
     expect(find.text('Start Sharing'), findsOneWidget);
-    expect(find.text('SETTINGS'), findsOneWidget);
+    expect(find.text('BLUETOOTH DEVICE'), findsOneWidget);
+    expect(find.text('MICROPHONE SOURCE'), findsOneWidget);
   });
 }

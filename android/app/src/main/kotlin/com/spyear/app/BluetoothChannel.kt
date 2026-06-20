@@ -1,4 +1,4 @@
-package com.example.share_birds
+package com.spyear.app
 
 import android.Manifest
 import android.bluetooth.BluetoothA2dp

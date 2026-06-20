@@ -1,4 +1,4 @@
-package com.example.share_birds
+package com.spyear.app
 import android.content.Context
 import android.content.Intent
 import android.os.Build

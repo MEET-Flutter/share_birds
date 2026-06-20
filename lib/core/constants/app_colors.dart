@@ -1,5 +1,5 @@
 // lib/core/constants/app_colors.dart
-// Futuristic dark-mode color palette for AudioShare Buds
+// Futuristic dark-mode color palette for SpyEar
 
 import 'package:flutter/material.dart';
 
