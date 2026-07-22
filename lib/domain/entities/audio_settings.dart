@@ -20,6 +20,7 @@ class AudioSettings {
   // Multi-Earbud & Speaker Pass-Through fields
   final bool playToPhoneSpeaker; // Also play through phone's loudspeaker
   final bool dualEarbudMode; // Broadcast to multiple connected Bluetooth earbuds
+  final String? recordingPath; // Path for saving live mic PCM audio
 
   const AudioSettings({
     this.lowLatencyMode   = true,
@@ -35,6 +36,7 @@ class AudioSettings {
     this.sleepTimerMinutes = 0,
     this.playToPhoneSpeaker = false,
     this.dualEarbudMode   = false,
+    this.recordingPath,
   });
 
   AudioSettings copyWith({
@@ -51,6 +53,7 @@ class AudioSettings {
     int? sleepTimerMinutes,
     bool? playToPhoneSpeaker,
     bool? dualEarbudMode,
+    String? recordingPath,
   }) {
     return AudioSettings(
       lowLatencyMode:    lowLatencyMode   ?? this.lowLatencyMode,
@@ -66,6 +69,7 @@ class AudioSettings {
       sleepTimerMinutes: sleepTimerMinutes ?? this.sleepTimerMinutes,
       playToPhoneSpeaker: playToPhoneSpeaker ?? this.playToPhoneSpeaker,
       dualEarbudMode:    dualEarbudMode   ?? this.dualEarbudMode,
+      recordingPath:     recordingPath    ?? this.recordingPath,
     );
   }
 
@@ -84,6 +88,7 @@ class AudioSettings {
     'sleepTimerMinutes': sleepTimerMinutes,
     'playToPhoneSpeaker': playToPhoneSpeaker,
     'dualEarbudMode':    dualEarbudMode,
+    'recordingPath':     recordingPath,
   };
 
   @override

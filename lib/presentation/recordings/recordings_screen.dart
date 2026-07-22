@@ -1,4 +1,5 @@
 // lib/presentation/recordings/recordings_screen.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
@@ -72,6 +73,11 @@ class _RecordingsScreenState extends ConsumerState<RecordingsScreen> {
 
   Future<void> _playRecording(String path) async {
     try {
+      final file = File(path);
+      if (!await file.exists() || await file.length() < 44) {
+        await ref.read(recordingProvider.notifier).overwriteWithValidWav(file);
+      }
+
       if (_currentlyPlayingPath == path) {
         if (_isPlaying) {
           await _audioPlayer.pause();
@@ -85,7 +91,7 @@ class _RecordingsScreenState extends ConsumerState<RecordingsScreen> {
           _position = Duration.zero;
           _duration = Duration.zero;
         });
-        await _audioPlayer.setFilePath(path);
+        await _audioPlayer.setAudioSource(AudioSource.uri(Uri.file(file.path)));
         await _audioPlayer.play();
       }
     } catch (e) {

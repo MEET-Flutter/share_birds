@@ -24,16 +24,19 @@ import android.os.Looper
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
+import java.io.RandomAccessFile
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * AudioSharingService — Android Foreground Service
  *
- * Core audio loop: AudioRecord → AudioTrack
+ * Core audio loop: AudioRecord → AudioTrack + optional live WAV PCM file recording
  * - Runs in a dedicated thread for lowest possible latency
- * - Supports low-latency mode, gain boost, noise suppression, echo cancellation
- * - Reports live audio level via companion object for platform channel reads
+ * - Streams live mic audio to AudioTrack and records real microphone PCM audio to WAV file
  * - Holds a partial wake lock to keep CPU running when screen is locked
  */
 class AudioSharingService : Service() {
@@ -50,6 +53,7 @@ class AudioSharingService : Service() {
         const val EXTRA_USE_BLUETOOTH_MIC = "use_bluetooth_mic"
         const val EXTRA_PLAY_SPEAKER     = "play_to_phone_speaker"
         const val EXTRA_DUAL_EARBUDS     = "dual_earbud_mode"
+        const val EXTRA_RECORDING_PATH   = "recording_path"
 
         private const val NOTIFICATION_ID  = 1001
         private const val CHANNEL_ID       = "audio_sharing_channel"
@@ -71,6 +75,15 @@ class AudioSharingService : Service() {
     private var noiseSuppression = false
     private var echoCancellation = false
     private var useBluetoothMic = true
+    private var playToPhoneSpeaker = false
+    private var dualEarbudMode     = false
+    private var recordingPath: String? = null
+
+    // ── File Recording State ──────────────────────────────────────────────────
+
+    private var recordingFile: File? = null
+    private var recordingStream: FileOutputStream? = null
+    private var totalBytesRecorded: Long = 0
 
     // ── State ─────────────────────────────────────────────────────────────────
 
@@ -103,7 +116,6 @@ class AudioSharingService : Service() {
             }
             ACTION_APPLY_SETTINGS -> {
                 readSettingsFromIntent(intent)
-                // Settings will be picked up on next loop iteration
             }
         }
         return START_STICKY
@@ -132,18 +144,17 @@ class AudioSharingService : Service() {
     private fun stopAudioLoop() {
         shouldRun.set(false)
         isRunning = false
+        stopRecordingFile()
         audioThread?.join(2000)
         audioThread = null
         currentAmplitude = 0
     }
 
     /**
-     * Main audio capture + playback loop.
-     * AudioRecord reads PCM frames → AudioTrack writes them to speaker/BT.
-     * Using PERFORMANCE_MODE_LOW_LATENCY when lowLatencyMode is enabled.
+     * Main audio capture + playback + live file recording loop.
      */
     private fun runAudioLoop() {
-        Log.i("AudioSharingService", "runAudioLoop started: useBluetoothMic=$useBluetoothMic, noiseSuppression=$noiseSuppression")
+        Log.i("AudioSharingService", "runAudioLoop started: useBluetoothMic=$useBluetoothMic, recordingPath=$recordingPath")
         val bufferSize = calculateBufferSize()
         val audioRecord = buildAudioRecord(bufferSize) ?: run {
             Log.e("AudioSharingService", "Failed to build AudioRecord!")
@@ -158,15 +169,11 @@ class AudioSharingService : Service() {
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 val devices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
-                Log.i("AudioSharingService", "Available input devices: ${devices.map { "${it.id}:${it.type}" }}")
                 val builtInMic = devices.firstOrNull { 
                     it.type == AudioDeviceInfo.TYPE_BUILTIN_MIC
                 }
                 if (builtInMic != null) {
-                    val success = audioRecord.setPreferredDevice(builtInMic)
-                    Log.i("AudioSharingService", "setPreferredDevice(TYPE_BUILTIN_MIC) returned: $success")
-                } else {
-                    Log.e("AudioSharingService", "No TYPE_BUILTIN_MIC found in input devices!")
+                    audioRecord.setPreferredDevice(builtInMic)
                 }
             }
         }
@@ -183,14 +190,13 @@ class AudioSharingService : Service() {
 
         val buffer = ShortArray(bufferSize / 2)
 
+        // Open live file recording if path specified
+        recordingPath?.let { path ->
+            startRecordingToFile(path)
+        }
+
         try {
             audioRecord.startRecording()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                Log.i("AudioSharingService", "Recording started. Initial routed device type: ${audioRecord.routedDevice?.type}")
-                audioRecord.addOnRoutingChangedListener({ recorder ->
-                    Log.i("AudioSharingService", "AudioRecord routing changed to device type: ${recorder?.routedDevice?.type}")
-                }, Handler(Looper.getMainLooper()))
-            }
             audioTrack.play()
 
             while (shouldRun.get()) {
@@ -201,6 +207,22 @@ class AudioSharingService : Service() {
                         for (i in 0 until read) {
                             val amplified = buffer[i].toInt() * 2
                             buffer[i] = amplified.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
+                        }
+                    }
+
+                    // Write live mic PCM audio to WAV file stream
+                    recordingStream?.let { fos ->
+                        val bytes = ByteArray(read * 2)
+                        for (i in 0 until read) {
+                            val v = buffer[i].toInt()
+                            bytes[i * 2] = (v and 0xff).toByte()
+                            bytes[i * 2 + 1] = ((v shr 8) and 0xff).toByte()
+                        }
+                        try {
+                            fos.write(bytes)
+                            totalBytesRecorded += bytes.size
+                        } catch (e: Exception) {
+                            Log.e("AudioSharingService", "Write to recording file failed: $e")
                         }
                     }
 
@@ -220,8 +242,101 @@ class AudioSharingService : Service() {
             ns?.release()
             aec?.release()
             agc?.release()
+            stopRecordingFile()
             currentAmplitude = 0
         }
+    }
+
+    // ── Live WAV Recording Functions ──────────────────────────────────────────
+
+    private fun startRecordingToFile(path: String) {
+        try {
+            stopRecordingFile()
+            val file = File(path)
+            file.parentFile?.mkdirs()
+            val fos = FileOutputStream(file)
+            writeWavHeader(fos, sampleRate, 1, 16, 0)
+            recordingFile = file
+            recordingStream = fos
+            totalBytesRecorded = 0
+            Log.i("AudioSharingService", "Live WAV recording started: $path")
+        } catch (e: Exception) {
+            Log.e("AudioSharingService", "Failed to start live recording file: $e")
+        }
+    }
+
+    private fun stopRecordingFile() {
+        try {
+            recordingStream?.let { fos ->
+                fos.flush()
+                fos.close()
+                recordingFile?.let { file ->
+                    updateWavHeader(file, totalBytesRecorded)
+                    Log.i("AudioSharingService", "Live WAV recording finalized: ${file.path}, totalBytes=$totalBytesRecorded")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("AudioSharingService", "Failed to finalize recording file: $e")
+        } finally {
+            recordingStream = null
+            recordingFile = null
+            totalBytesRecorded = 0
+        }
+    }
+
+    private fun writeWavHeader(out: OutputStream, sampleRate: Int, channels: Int, bitsPerSample: Int, pcmDataLength: Long) {
+        val header = ByteArray(44)
+        val byteRate = sampleRate * channels * bitsPerSample / 8
+        val blockAlign = channels * bitsPerSample / 8
+        val totalDataLen = pcmDataLength + 36
+
+        header[0] = 'R'.code.toByte(); header[1] = 'I'.code.toByte(); header[2] = 'F'.code.toByte(); header[3] = 'F'.code.toByte()
+        header[4] = (totalDataLen and 0xff).toByte()
+        header[5] = ((totalDataLen shr 8) and 0xff).toByte()
+        header[6] = ((totalDataLen shr 16) and 0xff).toByte()
+        header[7] = ((totalDataLen shr 24) and 0xff).toByte()
+        header[8] = 'W'.code.toByte(); header[9] = 'A'.code.toByte(); header[10] = 'V'.code.toByte(); header[11] = 'E'.code.toByte()
+        header[12] = 'f'.code.toByte(); header[13] = 'm'.code.toByte(); header[14] = 't'.code.toByte(); header[15] = ' '.code.toByte()
+        header[16] = 16; header[17] = 0; header[18] = 0; header[19] = 0
+        header[20] = 1; header[21] = 0 // PCM
+        header[22] = channels.toByte(); header[23] = 0
+        header[24] = (sampleRate and 0xff).toByte()
+        header[25] = ((sampleRate shr 8) and 0xff).toByte()
+        header[26] = ((sampleRate shr 16) and 0xff).toByte()
+        header[27] = ((sampleRate shr 24) and 0xff).toByte()
+        header[28] = (byteRate and 0xff).toByte()
+        header[29] = ((byteRate shr 8) and 0xff).toByte()
+        header[30] = ((byteRate shr 16) and 0xff).toByte()
+        header[31] = ((byteRate shr 24) and 0xff).toByte()
+        header[32] = blockAlign.toByte(); header[33] = 0
+        header[34] = bitsPerSample.toByte(); header[35] = 0
+        header[36] = 'd'.code.toByte(); header[37] = 'a'.code.toByte(); header[38] = 't'.code.toByte(); header[39] = 'a'.code.toByte()
+        header[40] = (pcmDataLength and 0xff).toByte()
+        header[41] = ((pcmDataLength shr 8) and 0xff).toByte()
+        header[42] = ((pcmDataLength shr 16) and 0xff).toByte()
+        header[43] = ((pcmDataLength shr 24) and 0xff).toByte()
+
+        out.write(header, 0, 44)
+    }
+
+    private fun updateWavHeader(file: File, pcmDataLength: Long) {
+        val raf = RandomAccessFile(file, "rw")
+        val totalDataLen = pcmDataLength + 36
+        raf.seek(4)
+        raf.write(byteArrayOf(
+            (totalDataLen and 0xff).toByte(),
+            ((totalDataLen shr 8) and 0xff).toByte(),
+            ((totalDataLen shr 16) and 0xff).toByte(),
+            ((totalDataLen shr 24) and 0xff).toByte()
+        ))
+        raf.seek(40)
+        raf.write(byteArrayOf(
+            (pcmDataLength and 0xff).toByte(),
+            ((pcmDataLength shr 8) and 0xff).toByte(),
+            ((pcmDataLength shr 16) and 0xff).toByte(),
+            ((pcmDataLength shr 24) and 0xff).toByte()
+        ))
+        raf.close()
     }
 
     // ── AudioRecord Builder ────────────────────────────────────────────────────
@@ -250,36 +365,28 @@ class AudioSharingService : Service() {
                 AudioRecord(audioSource, sampleRate, channelIn, encoding, bufferSize)
             }
         } catch (e: Exception) {
+            Log.e("AudioSharingService", "AudioRecord creation failed: ${e.message}")
             null
         }
     }
 
-    // ── AudioTrack Builder ─────────────────────────────────────────────────────
+    // ── AudioTrack Builder ────────────────────────────────────────────────────
 
     private fun buildAudioTrack(bufferSize: Int): AudioTrack? {
+        val streamType = if (playToPhoneSpeaker) {
+            AudioManager.STREAM_MUSIC
+        } else if (dualEarbudMode) {
+            AudioManager.STREAM_VOICE_CALL
+        } else {
+            AudioManager.STREAM_MUSIC
+        }
+
         return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val performanceMode = if (lowLatencyMode)
-                    AudioTrack.PERFORMANCE_MODE_LOW_LATENCY
-                else
-                    AudioTrack.PERFORMANCE_MODE_NONE
-
-                val usage = if (useBluetoothMic) {
-                    AudioAttributes.USAGE_VOICE_COMMUNICATION
-                } else {
-                    AudioAttributes.USAGE_MEDIA
-                }
-
-                val contentType = if (useBluetoothMic) {
-                    AudioAttributes.CONTENT_TYPE_SPEECH
-                } else {
-                    AudioAttributes.CONTENT_TYPE_MUSIC
-                }
-
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 AudioTrack.Builder()
                     .setAudioAttributes(AudioAttributes.Builder()
-                        .setUsage(usage)
-                        .setContentType(contentType)
+                        .setUsage(if (playToPhoneSpeaker) AudioAttributes.USAGE_MEDIA else AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                         .build())
                     .setAudioFormat(AudioFormat.Builder()
                         .setEncoding(encoding)
@@ -288,64 +395,47 @@ class AudioSharingService : Service() {
                         .build())
                     .setBufferSizeInBytes(bufferSize)
                     .setTransferMode(AudioTrack.MODE_STREAM)
-                    .setPerformanceMode(performanceMode)
+                    .setPerformanceMode(
+                        if (lowLatencyMode) AudioTrack.PERFORMANCE_MODE_LOW_LATENCY
+                        else AudioTrack.PERFORMANCE_MODE_NONE
+                    )
                     .build()
             } else {
-                val streamType = if (useBluetoothMic) {
-                    AudioManager.STREAM_VOICE_CALL
-                } else {
-                    AudioManager.STREAM_MUSIC
-                }
                 @Suppress("DEPRECATION")
                 AudioTrack(
-                    streamType,
-                    sampleRate, channelOut, encoding, bufferSize,
+                    streamType, sampleRate, channelOut, encoding, bufferSize,
                     AudioTrack.MODE_STREAM
                 )
             }
         } catch (e: Exception) {
+            Log.e("AudioSharingService", "AudioTrack creation failed: ${e.message}")
             null
         }
     }
 
-    // ── Audio Effects ──────────────────────────────────────────────────────────
+    private fun calculateBufferSize(): Int {
+        val minRecord = AudioRecord.getMinBufferSize(sampleRate, channelIn, encoding)
+        val minTrack  = AudioTrack.getMinBufferSize(sampleRate, channelOut, encoding)
+        return Math.max(minRecord, minTrack) * 2
+    }
 
     private fun attachNoiseSuppressor(sessionId: Int): NoiseSuppressor? {
-        if (!noiseSuppression) return null
-        return if (NoiseSuppressor.isAvailable()) {
+        return if (noiseSuppression && NoiseSuppressor.isAvailable()) {
             NoiseSuppressor.create(sessionId)?.also { it.enabled = true }
         } else null
     }
 
     private fun attachEchoCanceler(sessionId: Int): AcousticEchoCanceler? {
-        if (!echoCancellation) return null
-        return if (AcousticEchoCanceler.isAvailable()) {
+        return if (echoCancellation && AcousticEchoCanceler.isAvailable()) {
             AcousticEchoCanceler.create(sessionId)?.also { it.enabled = true }
         } else null
     }
 
     private fun attachGainControl(sessionId: Int): AutomaticGainControl? {
-        if (!gainBoost) return null
         return if (AutomaticGainControl.isAvailable()) {
             AutomaticGainControl.create(sessionId)?.also { it.enabled = true }
         } else null
     }
-
-    // ── Buffer Sizing ──────────────────────────────────────────────────────────
-
-    private fun calculateBufferSize(): Int {
-        val minBuf = AudioRecord.getMinBufferSize(sampleRate, channelIn, encoding)
-        return if (lowLatencyMode) {
-            // Use minimum buffer for lowest latency
-            maxOf(minBuf, 512)
-        } else {
-            // Larger buffer for stability
-            maxOf(minBuf * 4, 4096)
-        }
-    }
-
-    private var playToPhoneSpeaker = false
-    private var dualEarbudMode     = false
 
     // ── Settings ───────────────────────────────────────────────────────────────
 
@@ -357,6 +447,12 @@ class AudioSharingService : Service() {
         useBluetoothMic     = intent.getBooleanExtra(EXTRA_USE_BLUETOOTH_MIC, true)
         playToPhoneSpeaker  = intent.getBooleanExtra(EXTRA_PLAY_SPEAKER,     false)
         dualEarbudMode      = intent.getBooleanExtra(EXTRA_DUAL_EARBUDS,     false)
+        intent.getStringExtra(EXTRA_RECORDING_PATH)?.let { path ->
+            recordingPath = path
+            if (shouldRun.get()) {
+                startRecordingToFile(path)
+            }
+        }
     }
 
     // ── Wake Lock ──────────────────────────────────────────────────────────────
@@ -409,7 +505,7 @@ class AudioSharingService : Service() {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("AudioShare Buds")
-            .setContentText("🎧 Audio sharing is active")
+            .setContentText("🎧 Audio sharing & recording active")
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)

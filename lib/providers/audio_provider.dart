@@ -2,7 +2,9 @@
 // Riverpod notifier for audio sharing state and controls
 
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import '../domain/entities/audio_settings.dart';
 import '../domain/entities/sharing_state.dart';
 import '../domain/repositories/audio_repository.dart';
@@ -49,9 +51,6 @@ class AudioSharingNotifier extends Notifier<SharingState> {
         await _btRepo.disableBluetoothSco();
       }
 
-      // Start native AudioRecord → AudioTrack foreground service
-      await _audioRepo.startSharing(audioSettings);
-
       // Auto-trigger session recording with category tag
       String category = 'Earbud Stream';
       if (audioSettings.dualEarbudMode) {
@@ -59,7 +58,24 @@ class AudioSharingNotifier extends Notifier<SharingState> {
       } else if (audioSettings.playToPhoneSpeaker) {
         category = 'Speaker Pass-Through';
       }
-      ref.read(recordingProvider.notifier).saveNewRecording(category: category);
+
+      // Generate target WAV file path for live mic recording
+      final dir = await getApplicationDocumentsDirectory();
+      final recDir = Directory('${dir.path}/spyear_recordings');
+      if (!await recDir.exists()) {
+        await recDir.create(recursive: true);
+      }
+      final prefix = category.replaceAll(' ', '');
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final recordingFilePath = '${recDir.path}/${prefix}_$timestamp.wav';
+
+      final sessionSettings = audioSettings.copyWith(recordingPath: recordingFilePath);
+
+      // Start native AudioRecord → AudioTrack foreground service with live mic file recording
+      await _audioRepo.startSharing(sessionSettings);
+
+      // Refresh recordings list
+      ref.read(recordingProvider.notifier).loadRecordings();
 
       state = state.copyWith(
         status: SharingStatus.live,

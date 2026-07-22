@@ -88,6 +88,7 @@ class AudioChannel(private val context: Context) :
             putExtra(AudioSharingService.EXTRA_USE_BLUETOOTH_MIC, args?.get("useBluetoothMic") as? Boolean ?: true)
             putExtra(AudioSharingService.EXTRA_PLAY_SPEAKER,     args?.get("playToPhoneSpeaker") as? Boolean ?: false)
             putExtra(AudioSharingService.EXTRA_DUAL_EARBUDS,     args?.get("dualEarbudMode") as? Boolean ?: false)
+            putExtra(AudioSharingService.EXTRA_RECORDING_PATH,   args?.get("recordingPath") as? String)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent)
@@ -113,6 +114,7 @@ class AudioChannel(private val context: Context) :
             putExtra(AudioSharingService.EXTRA_USE_BLUETOOTH_MIC, args?.get("useBluetoothMic") as? Boolean ?: true)
             putExtra(AudioSharingService.EXTRA_PLAY_SPEAKER,     args?.get("playToPhoneSpeaker") as? Boolean ?: false)
             putExtra(AudioSharingService.EXTRA_DUAL_EARBUDS,     args?.get("dualEarbudMode") as? Boolean ?: false)
+            putExtra(AudioSharingService.EXTRA_RECORDING_PATH,   args?.get("recordingPath") as? String)
         }
         context.startService(intent)
     }
