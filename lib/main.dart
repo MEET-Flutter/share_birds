@@ -7,8 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/constants/app_theme.dart';
-import 'presentation/home/home_screen.dart';
+import 'presentation/splash/splash_screen.dart';
 import 'providers/repository_providers.dart';
+import 'providers/settings_provider.dart';
 import 'providers/tts_provider.dart';
 
 void main() async {
@@ -20,7 +21,7 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Status bar styling for immersive dark look
+  // Status bar styling for immersive look
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
@@ -51,14 +52,17 @@ class AudioShareBudsApp extends ConsumerWidget {
     ref.watch(ttsEngineProvider);
     ref.watch(timeAnnouncementProvider);
 
+    final appSettings = ref.watch(appSettingsProvider).valueOrNull;
+    final isDark = appSettings?.isDarkMode ?? true;
+
     return SafeArea(
       child: MaterialApp(
         title: 'SpyEar',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.dark,
-        home: const HomeScreen(),
+        themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+        home: const SplashScreen(),
       ),
     );
   }

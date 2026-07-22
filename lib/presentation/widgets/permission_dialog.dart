@@ -24,14 +24,19 @@ class PermissionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surfaceBg     = AppColors.getSurfaceBg(context);
+    final textPrimary   = AppColors.getTextPrimary(context);
+    final textSecondary = AppColors.getTextSecondary(context);
+    final border        = AppColors.getBorder(context);
+
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          color: AppColors.surfaceBg,
+          color: surfaceBg,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: border),
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withValues(alpha: 0.1),
@@ -57,11 +62,11 @@ class PermissionDialog extends StatelessWidget {
 
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Outfit',
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -69,10 +74,10 @@ class PermissionDialog extends StatelessWidget {
 
             Text(
               description,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Outfit',
                 fontSize: 14,
-                color: AppColors.textSecondary,
+                color: textSecondary,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -108,11 +113,11 @@ class PermissionDialog extends StatelessWidget {
             // Deny
             TextButton(
               onPressed: onDeny,
-              child: const Text(
+              child: Text(
                 'Not Now',
                 style: TextStyle(
                   fontFamily: 'Outfit',
-                  color: AppColors.textSecondary,
+                  color: textSecondary,
                   fontSize: 14,
                 ),
               ),

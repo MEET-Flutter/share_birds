@@ -18,6 +18,8 @@ class AudioMethods {
   static const String getAudioLevel   = 'getAudioLevel';
   static const String applySettings   = 'applySettings';
   static const String isSharing       = 'isSharing';
+  static const String startRecording  = 'startRecording';
+  static const String stopRecording   = 'stopRecording';
 }
 
 /// Method names for Bluetooth platform channel
@@ -63,6 +65,14 @@ class PrefKeys {
   static const String useBluetoothMic   = 'use_bluetooth_mic';
   static const String announceTime      = 'announce_time';
   static const String announceInterval  = 'announce_interval';
+  static const String eqPreset         = 'eq_preset';
+  static const String eqBands          = 'eq_bands';
+  static const String leftBalance      = 'left_balance';
+  static const String rightBalance     = 'right_balance';
+  static const String voxThreshold     = 'vox_threshold';
+  static const String playToPhoneSpeaker = 'play_to_phone_speaker';
+  static const String dualEarbudMode   = 'dual_earbud_mode';
+  static const String isDarkMode       = 'is_dark_mode';
 }
 
 /// Notification configuration

@@ -9,6 +9,7 @@ import '../domain/repositories/audio_repository.dart';
 import '../domain/repositories/bluetooth_repository.dart';
 import 'repository_providers.dart';
 import 'settings_provider.dart';
+import 'recording_provider.dart';
 
 // ── Audio Sharing Notifier ───────────────────────────────────────────────────
 
@@ -50,6 +51,15 @@ class AudioSharingNotifier extends Notifier<SharingState> {
 
       // Start native AudioRecord → AudioTrack foreground service
       await _audioRepo.startSharing(audioSettings);
+
+      // Auto-trigger session recording with category tag
+      String category = 'Earbud Stream';
+      if (audioSettings.dualEarbudMode) {
+        category = 'Intercom Relay';
+      } else if (audioSettings.playToPhoneSpeaker) {
+        category = 'Speaker Pass-Through';
+      }
+      ref.read(recordingProvider.notifier).saveNewRecording(category: category);
 
       state = state.copyWith(
         status: SharingStatus.live,

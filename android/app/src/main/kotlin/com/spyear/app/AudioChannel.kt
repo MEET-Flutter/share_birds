@@ -81,11 +81,13 @@ class AudioChannel(private val context: Context) :
     private fun startService(args: Map<*, *>?) {
         val intent = Intent(context, AudioSharingService::class.java).apply {
             action = AudioSharingService.ACTION_START
-            putExtra(AudioSharingService.EXTRA_LOW_LATENCY,    args?.get("lowLatencyMode")   as? Boolean ?: true)
-            putExtra(AudioSharingService.EXTRA_GAIN_BOOST,     args?.get("gainBoost")        as? Boolean ?: false)
-            putExtra(AudioSharingService.EXTRA_NOISE_SUPPRESS, args?.get("noiseSuppression") as? Boolean ?: false)
-            putExtra(AudioSharingService.EXTRA_ECHO_CANCEL,    args?.get("echoCancellation") as? Boolean ?: false)
+            putExtra(AudioSharingService.EXTRA_LOW_LATENCY,      args?.get("lowLatencyMode")   as? Boolean ?: true)
+            putExtra(AudioSharingService.EXTRA_GAIN_BOOST,       args?.get("gainBoost")        as? Boolean ?: false)
+            putExtra(AudioSharingService.EXTRA_NOISE_SUPPRESS,   args?.get("noiseSuppression") as? Boolean ?: false)
+            putExtra(AudioSharingService.EXTRA_ECHO_CANCEL,      args?.get("echoCancellation") as? Boolean ?: false)
             putExtra(AudioSharingService.EXTRA_USE_BLUETOOTH_MIC, args?.get("useBluetoothMic") as? Boolean ?: true)
+            putExtra(AudioSharingService.EXTRA_PLAY_SPEAKER,     args?.get("playToPhoneSpeaker") as? Boolean ?: false)
+            putExtra(AudioSharingService.EXTRA_DUAL_EARBUDS,     args?.get("dualEarbudMode") as? Boolean ?: false)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent)
@@ -104,11 +106,13 @@ class AudioChannel(private val context: Context) :
     private fun applySettings(args: Map<*, *>?) {
         val intent = Intent(context, AudioSharingService::class.java).apply {
             action = AudioSharingService.ACTION_APPLY_SETTINGS
-            putExtra(AudioSharingService.EXTRA_LOW_LATENCY,    args?.get("lowLatencyMode")   as? Boolean ?: true)
-            putExtra(AudioSharingService.EXTRA_GAIN_BOOST,     args?.get("gainBoost")        as? Boolean ?: false)
-            putExtra(AudioSharingService.EXTRA_NOISE_SUPPRESS, args?.get("noiseSuppression") as? Boolean ?: false)
-            putExtra(AudioSharingService.EXTRA_ECHO_CANCEL,    args?.get("echoCancellation") as? Boolean ?: false)
+            putExtra(AudioSharingService.EXTRA_LOW_LATENCY,      args?.get("lowLatencyMode")   as? Boolean ?: true)
+            putExtra(AudioSharingService.EXTRA_GAIN_BOOST,       args?.get("gainBoost")        as? Boolean ?: false)
+            putExtra(AudioSharingService.EXTRA_NOISE_SUPPRESS,   args?.get("noiseSuppression") as? Boolean ?: false)
+            putExtra(AudioSharingService.EXTRA_ECHO_CANCEL,      args?.get("echoCancellation") as? Boolean ?: false)
             putExtra(AudioSharingService.EXTRA_USE_BLUETOOTH_MIC, args?.get("useBluetoothMic") as? Boolean ?: true)
+            putExtra(AudioSharingService.EXTRA_PLAY_SPEAKER,     args?.get("playToPhoneSpeaker") as? Boolean ?: false)
+            putExtra(AudioSharingService.EXTRA_DUAL_EARBUDS,     args?.get("dualEarbudMode") as? Boolean ?: false)
         }
         context.startService(intent)
     }

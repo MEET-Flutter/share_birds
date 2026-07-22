@@ -65,4 +65,33 @@ class AppColors {
     colors: [Color(0x6600D4FF), Color(0x0000D4FF)],
     radius: 0.7,
   );
+
+  // ── Dynamic Theme Helpers ──────────────────────────────────────────────────
+  static Color getScaffoldBg(BuildContext context) {
+    return Theme.of(context).scaffoldBackgroundColor;
+  }
+
+  static Color getSurfaceBg(BuildContext context) {
+    return Theme.of(context).colorScheme.surface;
+  }
+
+  static Color getSurfaceMid(BuildContext context) {
+    return Theme.of(context).colorScheme.surfaceContainerHighest;
+  }
+
+  static Color getTextPrimary(BuildContext context) {
+    return Theme.of(context).colorScheme.onSurface;
+  }
+
+  static Color getTextSecondary(BuildContext context) {
+    return Theme.of(context).colorScheme.onSurfaceVariant;
+  }
+
+  static Color getBorder(BuildContext context) {
+    return Theme.of(context).colorScheme.outline;
+  }
+
+  static bool isDark(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
 }

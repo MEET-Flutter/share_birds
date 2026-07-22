@@ -15,15 +15,19 @@ class SettingsScreen extends ConsumerWidget {
     final audioNotifier = ref.read(audioSettingsProvider.notifier);
     final appNotifier   = ref.read(appSettingsProvider.notifier);
 
+    final scaffoldBg  = AppColors.getScaffoldBg(context);
+    final textPrimary = AppColors.getTextPrimary(context);
+    final textSec     = AppColors.getTextSecondary(context);
+
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textSecondary),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: textSec),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Settings'),
+        title: Text('Settings', style: TextStyle(color: textPrimary)),
         centerTitle: true,
       ),
       body: ListView(
@@ -85,6 +89,45 @@ class SettingsScreen extends ConsumerWidget {
               value:   audioSettings?.useBluetoothMic ?? true,
               onChanged: audioSettings != null
                   ? (v) => audioNotifier.toggleUseBluetoothMic(v)
+                  : null,
+            ),
+            _Divider(),
+            _ToggleTile(
+              icon:    Icons.volume_up_outlined,
+              title:   'Phone Speaker Pass-Through',
+              subtitle: 'Play earbud mic sound out of phone loudspeaker alongside earbuds',
+              color:   AppColors.secondary,
+              value:   audioSettings?.playToPhoneSpeaker ?? false,
+              onChanged: audioSettings != null
+                  ? (v) => audioNotifier.togglePlayToPhoneSpeaker(v)
+                  : null,
+            ),
+            _Divider(),
+            _ToggleTile(
+              icon:    Icons.people_outline_rounded,
+              title:   'Multi-Earbud Intercom Relay',
+              subtitle: 'Broadcast mic audio to multiple connected Bluetooth earbuds so users hear each other',
+              color:   AppColors.liveGreen,
+              value:   audioSettings?.dualEarbudMode ?? false,
+              onChanged: audioSettings != null
+                  ? (v) => audioNotifier.toggleDualEarbudMode(v)
+                  : null,
+            ),
+          ]),
+          const SizedBox(height: 28),
+
+          // ── Appearance & Theme ──────────────────────────────────────────────
+          const _SectionHeader(icon: Icons.palette_outlined, title: 'Appearance & Theme'),
+          const SizedBox(height: 12),
+          _SettingsCard(children: [
+            _ToggleTile(
+              icon:    (appSettings?.isDarkMode ?? true) ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+              title:   'Dark Mode Theme',
+              subtitle: (appSettings?.isDarkMode ?? true) ? 'Electric Space Dark theme active' : 'Clean Arctic Light theme active',
+              color:   AppColors.primary,
+              value:   appSettings?.isDarkMode ?? true,
+              onChanged: appSettings != null
+                  ? (v) => appNotifier.toggleDarkMode(v)
                   : null,
             ),
           ]),
@@ -213,12 +256,13 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textSec = AppColors.getTextSecondary(context);
     return Row(children: [
-      Icon(icon, color: AppColors.textSecondary, size: 16),
+      Icon(icon, color: textSec, size: 16),
       const SizedBox(width: 8),
       Text(title.toUpperCase(),
-          style: const TextStyle(fontFamily: 'Outfit', fontSize: 11,
-              fontWeight: FontWeight.w700, color: AppColors.textSecondary,
+          style: TextStyle(fontFamily: 'Outfit', fontSize: 11,
+              fontWeight: FontWeight.w700, color: textSec,
               letterSpacing: 1.5)),
     ]);
   }
@@ -230,11 +274,13 @@ class _SettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surface = AppColors.getSurfaceBg(context);
+    final border  = AppColors.getBorder(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceBg,
+        color: surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: border),
       ),
       child: Column(children: children),
     );
@@ -255,6 +301,8 @@ class _ToggleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textPrimary = AppColors.getTextPrimary(context);
+    final textSec     = AppColors.getTextSecondary(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(children: [
@@ -268,11 +316,11 @@ class _ToggleTile extends StatelessWidget {
         ),
         const SizedBox(width: 14),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontFamily: 'Outfit', fontSize: 15,
-              fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+          Text(title, style: TextStyle(fontFamily: 'Outfit', fontSize: 15,
+              fontWeight: FontWeight.w600, color: textPrimary)),
           const SizedBox(height: 2),
-          Text(subtitle, style: const TextStyle(fontFamily: 'Outfit', fontSize: 12,
-              color: AppColors.textSecondary)),
+          Text(subtitle, style: TextStyle(fontFamily: 'Outfit', fontSize: 12,
+              color: textSec)),
         ])),
         Switch(value: value, onChanged: onChanged),
       ]),
@@ -282,6 +330,8 @@ class _ToggleTile extends StatelessWidget {
 
 class _Divider extends StatelessWidget {
   @override
-  Widget build(BuildContext context) =>
-      const Divider(color: AppColors.border, height: 1, indent: 16, endIndent: 16);
+  Widget build(BuildContext context) {
+    final border = AppColors.getBorder(context);
+    return Divider(color: border, height: 1, indent: 16, endIndent: 16);
+  }
 }

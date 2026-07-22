@@ -15,12 +15,24 @@ class SettingsLocalDatasource {
   // ── Audio Settings ──────────────────────────────────────────────────────────
 
   AudioSettings getAudioSettings() {
+    final eqBandsRaw = _prefs.getStringList(PrefKeys.eqBands);
+    final eqBands = eqBandsRaw != null
+        ? eqBandsRaw.map((e) => double.tryParse(e) ?? 0.0).toList()
+        : const [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
     return AudioSettings(
       lowLatencyMode:   _prefs.getBool(PrefKeys.lowLatencyMode)   ?? true,
       gainBoost:        _prefs.getBool(PrefKeys.gainBoost)        ?? false,
       noiseSuppression: _prefs.getBool(PrefKeys.noiseSuppression) ?? false,
       echoCancellation: _prefs.getBool(PrefKeys.echoCancellation) ?? false,
       useBluetoothMic:  _prefs.getBool(PrefKeys.useBluetoothMic)  ?? true,
+      eqPreset:         _prefs.getString(PrefKeys.eqPreset)      ?? 'flat',
+      eqBands:          eqBands,
+      leftBalance:      _prefs.getDouble(PrefKeys.leftBalance)    ?? 1.0,
+      rightBalance:     _prefs.getDouble(PrefKeys.rightBalance)   ?? 1.0,
+      voxThreshold:     _prefs.getDouble(PrefKeys.voxThreshold)   ?? 0.0,
+      playToPhoneSpeaker: _prefs.getBool(PrefKeys.playToPhoneSpeaker) ?? false,
+      dualEarbudMode:    _prefs.getBool(PrefKeys.dualEarbudMode)   ?? false,
     );
   }
 
@@ -31,6 +43,13 @@ class SettingsLocalDatasource {
       _prefs.setBool(PrefKeys.noiseSuppression, s.noiseSuppression),
       _prefs.setBool(PrefKeys.echoCancellation, s.echoCancellation),
       _prefs.setBool(PrefKeys.useBluetoothMic,  s.useBluetoothMic),
+      _prefs.setString(PrefKeys.eqPreset,       s.eqPreset),
+      _prefs.setStringList(PrefKeys.eqBands,    s.eqBands.map((e) => e.toString()).toList()),
+      _prefs.setDouble(PrefKeys.leftBalance,    s.leftBalance),
+      _prefs.setDouble(PrefKeys.rightBalance,   s.rightBalance),
+      _prefs.setDouble(PrefKeys.voxThreshold,   s.voxThreshold),
+      _prefs.setBool(PrefKeys.playToPhoneSpeaker, s.playToPhoneSpeaker),
+      _prefs.setBool(PrefKeys.dualEarbudMode,   s.dualEarbudMode),
     ]);
   }
 
@@ -40,6 +59,7 @@ class SettingsLocalDatasource {
     return AppSettings(
       announceTime:            _prefs.getBool(PrefKeys.announceTime)      ?? false,
       announceIntervalMinutes: _prefs.getInt(PrefKeys.announceInterval)   ?? 30,
+      isDarkMode:              _prefs.getBool(PrefKeys.isDarkMode)        ?? true,
     );
   }
 
@@ -47,6 +67,7 @@ class SettingsLocalDatasource {
     await Future.wait([
       _prefs.setBool(PrefKeys.announceTime,    s.announceTime),
       _prefs.setInt(PrefKeys.announceInterval, s.announceIntervalMinutes),
+      _prefs.setBool(PrefKeys.isDarkMode,       s.isDarkMode),
     ]);
   }
 }

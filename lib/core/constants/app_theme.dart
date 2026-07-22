@@ -1,12 +1,11 @@
 // lib/core/constants/app_theme.dart
-// Material 3 dark theme configuration for SpyEar
-
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 class AppTheme {
   AppTheme._();
 
+  // ── Dark Theme ──────────────────────────────────────────────────────────────
   static ThemeData get darkTheme {
     const colorScheme = ColorScheme(
       brightness: Brightness.dark,
@@ -40,10 +39,8 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.scaffoldBg,
       fontFamily: 'Outfit',
-
-      // AppBar
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.scaffoldBg,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -52,11 +49,8 @@ class AppTheme {
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
-          letterSpacing: 0.5,
         ),
       ),
-
-      // Cards
       cardTheme: CardThemeData(
         color: AppColors.surfaceBg,
         elevation: 0,
@@ -64,85 +58,103 @@ class AppTheme {
           borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: AppColors.border, width: 1),
         ),
-        margin: EdgeInsets.zero,
       ),
-
-      // Switches
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) return AppColors.primary;
           return AppColors.textSecondary;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return AppColors.primaryGlow;
-          }
+          if (states.contains(WidgetState.selected)) return AppColors.primaryGlow;
           return AppColors.surfaceMid;
         }),
-        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return AppColors.primaryDim;
-          }
-          return AppColors.border;
-        }),
       ),
-
-      // Sliders
       sliderTheme: const SliderThemeData(
         activeTrackColor: AppColors.primary,
         inactiveTrackColor: AppColors.border,
         thumbColor: AppColors.primary,
         overlayColor: AppColors.primaryGlow,
-        valueIndicatorColor: AppColors.surfaceElevated,
-        valueIndicatorTextStyle: TextStyle(
-          color: AppColors.textPrimary,
+      ),
+    );
+  }
+
+  // ── Light Theme ─────────────────────────────────────────────────────────────
+  static ThemeData get lightTheme {
+    const lightScaffoldBg = Color(0xFFF4F7FC);
+    const lightSurfaceBg  = Color(0xFFFFFFFF);
+    const lightPrimary    = Color(0xFF007AFF);
+    const lightSecondary  = Color(0xFF5856D6);
+    const lightTextPrimary = Color(0xFF0F172A);
+    const lightTextSec     = Color(0xFF64748B);
+    const lightBorder      = Color(0xFFE2E8F0);
+
+    const colorScheme = ColorScheme(
+      brightness: Brightness.light,
+      primary: lightPrimary,
+      onPrimary: Color(0xFFFFFFFF),
+      primaryContainer: Color(0xFFE0F2FE),
+      onPrimaryContainer: lightPrimary,
+      secondary: lightSecondary,
+      onSecondary: Color(0xFFFFFFFF),
+      secondaryContainer: Color(0xFFEEF2FF),
+      onSecondaryContainer: lightSecondary,
+      error: AppColors.errorRed,
+      onError: Color(0xFFFFFFFF),
+      errorContainer: Color(0xFFFFE4E6),
+      onErrorContainer: AppColors.errorRed,
+      surface: lightSurfaceBg,
+      onSurface: lightTextPrimary,
+      surfaceContainerHighest: Color(0xFFF8FAFC),
+      onSurfaceVariant: lightTextSec,
+      outline: lightBorder,
+      outlineVariant: Color(0xFFCBD5E1),
+      shadow: Color(0x1A000000),
+      scrim: Color(0x33000000),
+      inverseSurface: lightTextPrimary,
+      onInverseSurface: lightScaffoldBg,
+      inversePrimary: lightPrimary,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: lightScaffoldBg,
+      fontFamily: 'Outfit',
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        foregroundColor: lightTextPrimary,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleTextStyle: TextStyle(
           fontFamily: 'Outfit',
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: lightTextPrimary,
         ),
       ),
-
-      // SnackBar
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.surfaceElevated,
-        contentTextStyle: const TextStyle(
-          color: AppColors.textPrimary,
-          fontFamily: 'Outfit',
-        ),
+      cardTheme: CardThemeData(
+        color: lightSurfaceBg,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: lightBorder, width: 1),
         ),
-        behavior: SnackBarBehavior.floating,
       ),
-
-      // Dividers
-      dividerTheme: const DividerThemeData(
-        color: AppColors.border,
-        thickness: 1,
-        space: 1,
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return lightPrimary;
+          return lightTextSec;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return const Color(0xFFBAE6FD);
+          return const Color(0xFFE2E8F0);
+        }),
       ),
-
-      // Icon
-      iconTheme: const IconThemeData(
-        color: AppColors.textSecondary,
-        size: 24,
-      ),
-
-      // Text
-      textTheme: const TextTheme(
-        displayLarge:  TextStyle(fontFamily: 'Outfit', fontSize: 57, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-        displayMedium: TextStyle(fontFamily: 'Outfit', fontSize: 45, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        displaySmall:  TextStyle(fontFamily: 'Outfit', fontSize: 36, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        headlineLarge: TextStyle(fontFamily: 'Outfit', fontSize: 32, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        headlineMedium:TextStyle(fontFamily: 'Outfit', fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        headlineSmall: TextStyle(fontFamily: 'Outfit', fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        titleLarge:    TextStyle(fontFamily: 'Outfit', fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        titleMedium:   TextStyle(fontFamily: 'Outfit', fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
-        titleSmall:    TextStyle(fontFamily: 'Outfit', fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
-        bodyLarge:     TextStyle(fontFamily: 'Outfit', fontSize: 16, fontWeight: FontWeight.w400, color: AppColors.textPrimary),
-        bodyMedium:    TextStyle(fontFamily: 'Outfit', fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textSecondary),
-        bodySmall:     TextStyle(fontFamily: 'Outfit', fontSize: 12, fontWeight: FontWeight.w400, color: AppColors.textSecondary),
-        labelLarge:    TextStyle(fontFamily: 'Outfit', fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        labelMedium:   TextStyle(fontFamily: 'Outfit', fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
-        labelSmall:    TextStyle(fontFamily: 'Outfit', fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textDisabled),
+      sliderTheme: const SliderThemeData(
+        activeTrackColor: lightPrimary,
+        inactiveTrackColor: lightBorder,
+        thumbColor: lightPrimary,
+        overlayColor: Color(0x33007AFF),
       ),
     );
   }

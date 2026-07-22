@@ -13,6 +13,8 @@ import '../../domain/entities/sharing_state.dart';
 import '../../domain/entities/audio_settings.dart';
 import '../sharing/sharing_screen.dart';
 import '../settings/settings_screen.dart';
+import '../stealth/stealth_screen.dart';
+import '../stealth/decoy_calculator_screen.dart';
 import '../widgets/bt_device_card.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/waveform_widget.dart';
@@ -100,8 +102,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final audioSettings = ref.watch(audioSettingsProvider).valueOrNull ?? const AudioSettings();
     final useBluetoothMic = audioSettings.useBluetoothMic;
 
+    final scaffoldBg    = AppColors.getScaffoldBg(context);
+    final surfaceBg     = AppColors.getSurfaceBg(context);
+    final border        = AppColors.getBorder(context);
+    final textPrimary   = AppColors.getTextPrimary(context);
+    final textSecondary = AppColors.getTextSecondary(context);
+
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: Row(
@@ -116,12 +124,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               child: const Icon(Icons.headphones_rounded, color: Colors.black, size: 18),
             ),
             const SizedBox(width: 10),
-            const Text('SpyEar'),
+            Text('SpyEar', style: TextStyle(color: textPrimary)),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_rounded, color: AppColors.textSecondary),
+            icon: Icon(Icons.settings_rounded, color: textSecondary),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SettingsScreen()),
@@ -210,7 +218,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               height:     64,
               color:      isLive ? AppColors.liveGreen : AppColors.primary,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
+
+            // ── Quick Modes Action Bar ─────────────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: _QuickModeButton(
+                    icon: Icons.visibility_off_rounded,
+                    label: 'Stealth OLED',
+                    color: AppColors.secondary,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const StealthScreen()),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _QuickModeButton(
+                    icon: Icons.calculate_rounded,
+                    label: 'Decoy Calculator',
+                    color: AppColors.warningAmber,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const DecoyCalculatorScreen()),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
 
             // ── BT Device Card ────────────────────────────────────────────────
             const Text(
@@ -231,13 +269,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             const SizedBox(height: 32),
 
             // ── Microphone Source ──────────────────────────────────────────────
-            const Text(
+            Text(
               'MICROPHONE SOURCE',
               style: TextStyle(
                 fontFamily: 'Outfit',
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
+                color: textSecondary,
                 letterSpacing: 1.5,
               ),
             ),
@@ -245,9 +283,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: AppColors.surfaceBg,
+                color: surfaceBg,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: border),
               ),
               child: Row(
                 children: [
@@ -271,7 +309,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               Icons.bluetooth_audio_rounded,
                               color: useBluetoothMic 
                                   ? (isLive ? AppColors.primary.withValues(alpha: 0.5) : AppColors.primary)
-                                  : AppColors.textSecondary,
+                                  : textSecondary,
                               size: 20,
                             ),
                             const SizedBox(height: 4),
@@ -282,8 +320,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: useBluetoothMic 
-                                    ? (isLive ? AppColors.textPrimary.withValues(alpha: 0.6) : AppColors.textPrimary)
-                                    : AppColors.textSecondary,
+                                    ? (isLive ? textPrimary.withValues(alpha: 0.6) : textPrimary)
+                                    : textSecondary,
                               ),
                             ),
                           ],
@@ -311,7 +349,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               Icons.phone_android_rounded,
                               color: !useBluetoothMic 
                                   ? (isLive ? AppColors.primary.withValues(alpha: 0.5) : AppColors.primary)
-                                  : AppColors.textSecondary,
+                                  : textSecondary,
                               size: 20,
                             ),
                             const SizedBox(height: 4),
@@ -322,8 +360,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: !useBluetoothMic 
-                                    ? (isLive ? AppColors.textPrimary.withValues(alpha: 0.6) : AppColors.textPrimary)
-                                    : AppColors.textSecondary,
+                                    ? (isLive ? textPrimary.withValues(alpha: 0.6) : textPrimary)
+                                    : textSecondary,
                               ),
                             ),
                           ],
@@ -429,6 +467,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ),
                       ],
                     ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickModeButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickModeButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final surface = AppColors.getSurfaceBg(context);
+    final border  = AppColors.getBorder(context);
+    final text    = AppColors.getTextPrimary(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 18),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: text,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

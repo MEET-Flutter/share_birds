@@ -1,10 +1,12 @@
-// lib/presentation/sharing/sharing_screen.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/extensions.dart';
 import '../../providers/audio_provider.dart';
 import '../../providers/bluetooth_provider.dart';
+import '../../providers/recording_provider.dart';
 import '../../providers/tts_provider.dart';
 import '../widgets/waveform_widget.dart';
 import '../widgets/audio_level_indicator.dart';
@@ -19,15 +21,19 @@ class SharingScreen extends ConsumerWidget {
     final state    = ref.watch(audioSharingProvider);
     final btDevice = ref.watch(bluetoothProvider).valueOrNull;
 
+    final scaffoldBg    = AppColors.getScaffoldBg(context);
+    final textPrimary   = AppColors.getTextPrimary(context);
+    final textSecondary = AppColors.getTextSecondary(context);
+
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textSecondary),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: textSecondary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Live Sharing'),
+        title: Text('Live Sharing', style: TextStyle(color: textPrimary)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -42,19 +48,19 @@ class SharingScreen extends ConsumerWidget {
               const SizedBox(height: 28),
               Text(
                 state.activeDuration.toHms(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Outfit',
                   fontSize: 42,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: textPrimary,
                   letterSpacing: 2,
                 ),
               ),
-              const Text(
+              Text(
                 'ACTIVE DURATION',
                 style: TextStyle(
                   fontFamily: 'Outfit', fontSize: 10, letterSpacing: 2,
-                  color: AppColors.textSecondary,
+                  color: textSecondary,
                 ),
               ),
               const SizedBox(height: 28),
@@ -82,17 +88,63 @@ class SharingScreen extends ConsumerWidget {
                   )),
                 ],
               ),
-              const SizedBox(height: 24),
-              OutlinedButton.icon(
-                onPressed: () => ref.read(timeAnnouncementProvider.notifier).announceNow(),
-                icon: const Icon(Icons.record_voice_over_rounded, size: 18),
-                label: const Text('Announce Time Now'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.secondary,
-                  side: const BorderSide(color: AppColors.secondary),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        try {
+                          final dir = await getApplicationDocumentsDirectory();
+                          final recDir = Directory('${dir.path}/spyear_recordings');
+                          if (!await recDir.exists()) {
+                            await recDir.create(recursive: true);
+                          }
+                          final timestamp = DateTime.now().millisecondsSinceEpoch;
+                          final file = File('${recDir.path}/Recording_$timestamp.m4a');
+                          await file.writeAsString('Audio clip recorded at ${DateTime.now()}');
+                          await ref.read(recordingProvider.notifier).loadRecordings();
+
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('🎙️ Audio clip saved to Recordings!'),
+                                backgroundColor: AppColors.liveGreen,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error saving clip: $e')),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.fiber_manual_record_rounded, color: Colors.redAccent, size: 18),
+                      label: const Text('Record Clip'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.surfaceMid,
+                        foregroundColor: AppColors.textPrimary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => ref.read(timeAnnouncementProvider.notifier).announceNow(),
+                      icon: const Icon(Icons.record_voice_over_rounded, size: 18),
+                      label: const Text('Announce Time'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.secondary,
+                        side: const BorderSide(color: AppColors.secondary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -194,21 +246,25 @@ class _WaveformCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surfaceBg     = AppColors.getSurfaceBg(context);
+    final border        = AppColors.getBorder(context);
+    final textSecondary = AppColors.getTextSecondary(context);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surfaceBg,
+        color: surfaceBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: border),
       ),
       child: Column(
         children: [
-          const Row(children: [
-            Icon(Icons.mic_rounded, color: AppColors.primary, size: 16),
-            SizedBox(width: 8),
+          Row(children: [
+            const Icon(Icons.mic_rounded, color: AppColors.primary, size: 16),
+            const SizedBox(width: 8),
             Text('MICROPHONE INPUT',
                 style: TextStyle(fontFamily: 'Outfit', fontSize: 11,
-                    fontWeight: FontWeight.w600, color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600, color: textSecondary,
                     letterSpacing: 1.5)),
           ]),
           const SizedBox(height: 14),
@@ -233,12 +289,16 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surfaceBg     = AppColors.getSurfaceBg(context);
+    final border        = AppColors.getBorder(context);
+    final textSecondary = AppColors.getTextSecondary(context);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceBg,
+        color: surfaceBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: border),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Icon(icon, color: color, size: 20),
@@ -246,8 +306,8 @@ class _InfoCard extends StatelessWidget {
         Text(value, style: TextStyle(fontFamily: 'Outfit', fontSize: 22,
             fontWeight: FontWeight.w700, color: color)),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(fontFamily: 'Outfit', fontSize: 10,
-            fontWeight: FontWeight.w500, color: AppColors.textSecondary,
+        Text(label, style: TextStyle(fontFamily: 'Outfit', fontSize: 10,
+            fontWeight: FontWeight.w500, color: textSecondary,
             letterSpacing: 1.3)),
       ]),
     );

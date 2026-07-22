@@ -17,15 +17,20 @@ class BtDeviceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isConnected = device?.isConnected ?? false;
+    final isConnected   = device?.isConnected ?? false;
+    final surfaceBg     = AppColors.getSurfaceBg(context);
+    final surfaceMid    = AppColors.getSurfaceMid(context);
+    final textPrimary   = AppColors.getTextPrimary(context);
+    final textSecondary = AppColors.getTextSecondary(context);
+    final border        = AppColors.getBorder(context);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color:  AppColors.surfaceBg,
+        color: surfaceBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isConnected ? AppColors.primary.withValues(alpha: 0.4) : AppColors.border,
+          color: isConnected ? AppColors.primary.withValues(alpha: 0.4) : border,
         ),
       ),
       child: Row(
@@ -37,12 +42,12 @@ class BtDeviceCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: isConnected
                   ? AppColors.primary.withValues(alpha: 0.12)
-                  : AppColors.surfaceMid,
+                  : surfaceMid,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               _deviceIcon(device?.type),
-              color: isConnected ? AppColors.primary : AppColors.textDisabled,
+              color: isConnected ? AppColors.primary : textSecondary,
               size: 22,
             ),
           ),
@@ -59,7 +64,7 @@ class BtDeviceCard extends StatelessWidget {
                     fontFamily: 'Outfit',
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: isConnected ? AppColors.textPrimary : AppColors.textDisabled,
+                    color: isConnected ? textPrimary : textSecondary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -69,10 +74,10 @@ class BtDeviceCard extends StatelessWidget {
                   isConnected
                       ? _profileLabel(device!.type)
                       : 'Pair Bluetooth earbuds to start',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Outfit',
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: textSecondary,
                   ),
                 ),
               ],
@@ -87,7 +92,7 @@ class BtDeviceCard extends StatelessWidget {
                 width: 8, height: 8,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isConnected ? AppColors.liveGreen : AppColors.textDisabled,
+                  color: isConnected ? AppColors.liveGreen : textSecondary,
                   boxShadow: isConnected
                       ? [BoxShadow(color: AppColors.liveGreen.withValues(alpha: 0.5), blurRadius: 6)]
                       : null,
@@ -97,7 +102,7 @@ class BtDeviceCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: onRefresh,
-                  child: const Icon(Icons.refresh_rounded, size: 18, color: AppColors.textSecondary),
+                  child: Icon(Icons.refresh_rounded, size: 18, color: textSecondary),
                 ),
               ],
             ],

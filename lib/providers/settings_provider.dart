@@ -51,6 +51,59 @@ class AudioSettingsNotifier extends AsyncNotifier<AudioSettings> {
     state = AsyncData(updated);
     await _repo.saveAudioSettings(updated);
   }
+
+  Future<void> setEqPreset(String preset, List<double> bands) async {
+    final current = state.valueOrNull ?? const AudioSettings();
+    final updated = current.copyWith(eqPreset: preset, eqBands: bands);
+    state = AsyncData(updated);
+    await _repo.saveAudioSettings(updated);
+  }
+
+  Future<void> setEqBand(int index, double value) async {
+    final current = state.valueOrNull ?? const AudioSettings();
+    final newBands = List<double>.from(current.eqBands);
+    if (index >= 0 && index < newBands.length) {
+      newBands[index] = value;
+    }
+    final updated = current.copyWith(eqPreset: 'custom', eqBands: newBands);
+    state = AsyncData(updated);
+    await _repo.saveAudioSettings(updated);
+  }
+
+  Future<void> setBalance(double left, double right) async {
+    final current = state.valueOrNull ?? const AudioSettings();
+    final updated = current.copyWith(leftBalance: left, rightBalance: right);
+    state = AsyncData(updated);
+    await _repo.saveAudioSettings(updated);
+  }
+
+  Future<void> setVoxThreshold(double threshold) async {
+    final current = state.valueOrNull ?? const AudioSettings();
+    final updated = current.copyWith(voxThreshold: threshold);
+    state = AsyncData(updated);
+    await _repo.saveAudioSettings(updated);
+  }
+
+  Future<void> setSleepTimer(int minutes) async {
+    final current = state.valueOrNull ?? const AudioSettings();
+    final updated = current.copyWith(sleepTimerMinutes: minutes);
+    state = AsyncData(updated);
+    await _repo.saveAudioSettings(updated);
+  }
+
+  Future<void> togglePlayToPhoneSpeaker(bool v) async {
+    final current = state.valueOrNull ?? const AudioSettings();
+    final updated = current.copyWith(playToPhoneSpeaker: v);
+    state = AsyncData(updated);
+    await _repo.saveAudioSettings(updated);
+  }
+
+  Future<void> toggleDualEarbudMode(bool v) async {
+    final current = state.valueOrNull ?? const AudioSettings();
+    final updated = current.copyWith(dualEarbudMode: v);
+    state = AsyncData(updated);
+    await _repo.saveAudioSettings(updated);
+  }
 }
 
 final audioSettingsProvider = AsyncNotifierProvider<AudioSettingsNotifier, AudioSettings>(
@@ -77,6 +130,13 @@ class AppSettingsNotifier extends AsyncNotifier<AppSettings> {
   Future<void> setAnnounceInterval(int minutes) async {
     final current = state.valueOrNull ?? const AppSettings();
     final updated = current.copyWith(announceIntervalMinutes: minutes);
+    state = AsyncData(updated);
+    await _repo.saveAppSettings(updated);
+  }
+
+  Future<void> toggleDarkMode(bool v) async {
+    final current = state.valueOrNull ?? const AppSettings();
+    final updated = current.copyWith(isDarkMode: v);
     state = AsyncData(updated);
     await _repo.saveAppSettings(updated);
   }
