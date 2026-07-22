@@ -1,7 +1,7 @@
 name: share_birds
 description: "AudioShare Buds - Live mic audio streaming to Bluetooth earbuds"
 publish_to: 'none'
-version: 1.0.0+2
+version: 1.1.0+3
 
 environment:
   sdk: ^3.5.0
@@ -16,6 +16,7 @@ dependencies:
   # Audio
   flutter_tts: ^4.2.0
   audio_session: ^0.1.21
+  just_audio: ^0.9.38
 
   # Bluetooth / Audio routing
   # Uses platform channels for native AudioRecord/AudioTrack

@@ -48,6 +48,8 @@ class AudioSharingService : Service() {
         const val EXTRA_NOISE_SUPPRESS   = "noise_suppression"
         const val EXTRA_ECHO_CANCEL      = "echo_cancellation"
         const val EXTRA_USE_BLUETOOTH_MIC = "use_bluetooth_mic"
+        const val EXTRA_PLAY_SPEAKER     = "play_to_phone_speaker"
+        const val EXTRA_DUAL_EARBUDS     = "dual_earbud_mode"
 
         private const val NOTIFICATION_ID  = 1001
         private const val CHANNEL_ID       = "audio_sharing_channel"
@@ -342,14 +344,19 @@ class AudioSharingService : Service() {
         }
     }
 
+    private var playToPhoneSpeaker = false
+    private var dualEarbudMode     = false
+
     // ── Settings ───────────────────────────────────────────────────────────────
 
     private fun readSettingsFromIntent(intent: Intent) {
-        lowLatencyMode  = intent.getBooleanExtra(EXTRA_LOW_LATENCY,    true)
-        gainBoost       = intent.getBooleanExtra(EXTRA_GAIN_BOOST,     false)
-        noiseSuppression = intent.getBooleanExtra(EXTRA_NOISE_SUPPRESS, false)
-        echoCancellation = intent.getBooleanExtra(EXTRA_ECHO_CANCEL,    false)
-        useBluetoothMic  = intent.getBooleanExtra(EXTRA_USE_BLUETOOTH_MIC, true)
+        lowLatencyMode     = intent.getBooleanExtra(EXTRA_LOW_LATENCY,      true)
+        gainBoost          = intent.getBooleanExtra(EXTRA_GAIN_BOOST,       false)
+        noiseSuppression    = intent.getBooleanExtra(EXTRA_NOISE_SUPPRESS,   false)
+        echoCancellation    = intent.getBooleanExtra(EXTRA_ECHO_CANCEL,      false)
+        useBluetoothMic     = intent.getBooleanExtra(EXTRA_USE_BLUETOOTH_MIC, true)
+        playToPhoneSpeaker  = intent.getBooleanExtra(EXTRA_PLAY_SPEAKER,     false)
+        dualEarbudMode      = intent.getBooleanExtra(EXTRA_DUAL_EARBUDS,     false)
     }
 
     // ── Wake Lock ──────────────────────────────────────────────────────────────
