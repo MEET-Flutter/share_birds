@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../providers/audio_provider.dart';
 import '../../providers/bluetooth_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../providers/update_provider.dart';
 import '../../domain/entities/sharing_state.dart';
 import '../../domain/entities/audio_settings.dart';
 import '../sharing/sharing_screen.dart';
@@ -19,6 +20,7 @@ import '../widgets/bt_device_card.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/waveform_widget.dart';
 import '../widgets/permission_dialog.dart';
+import '../widgets/update_dialog.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -95,6 +97,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Listen for remote app updates from Firebase Realtime Database
+    ref.listen(appUpdateCheckProvider, (prev, next) {
+      next.whenData((updateInfo) {
+        if (updateInfo != null && mounted) {
+          final isAvailable = updateInfo.isUpdateAvailable(currentAppVersion);
+          final isForce = updateInfo.isForceUpdateRequired(currentAppVersion);
+          if (isAvailable || isForce) {
+            UpdateDialog.show(context, updateInfo, isForce: isForce);
+          }
+        }
+      });
+    });
+
     final sharingState = ref.watch(audioSharingProvider);
     final btDevice     = ref.watch(bluetoothProvider).valueOrNull;
     final isBtConnected = ref.watch(isBluetoothConnectedProvider);

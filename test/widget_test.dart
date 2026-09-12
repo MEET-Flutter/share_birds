@@ -62,8 +62,10 @@ void main() {
       ),
     );
 
-    // Trigger initial state frames
+    // Trigger initial state frames and advance past splash screen timer & route transition
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 3500));
+    await tester.pump(const Duration(milliseconds: 700));
 
     // Verify key UI text items are rendered
     expect(find.text('SpyEar'), findsWidgets);

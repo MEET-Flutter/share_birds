@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../providers/settings_provider.dart';
+import '../../providers/update_provider.dart';
+import '../widgets/update_dialog.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -224,7 +226,7 @@ class SettingsScreen extends ConsumerWidget {
                       Text('SpyEar',
                           style: TextStyle(fontFamily: 'Outfit', fontSize: 16,
                               fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                      Text('Version 1.0.0',
+                      Text('Version 1.2.1',
                           style: TextStyle(fontFamily: 'Outfit', fontSize: 12,
                               color: AppColors.textSecondary)),
                     ]),
@@ -238,6 +240,53 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+            ),
+            _Divider(),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              leading: Container(
+                width: 38, height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.system_update_rounded, color: AppColors.primary, size: 18),
+              ),
+              title: const Text(
+                'Check for Updates',
+                style: TextStyle(fontFamily: 'Outfit', fontSize: 15,
+                    fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              ),
+              subtitle: const Text(
+                'Check Firebase for new versions',
+                style: TextStyle(fontFamily: 'Outfit', fontSize: 12, color: AppColors.textSecondary),
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textSecondary),
+              onTap: () async {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Checking for updates...'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+                final updateInfo = await ref.read(appUpdateDatasourceProvider).fetchUpdateInfo();
+                if (context.mounted) {
+                  if (updateInfo != null && updateInfo.isUpdateAvailable(currentAppVersion)) {
+                    UpdateDialog.show(
+                      context,
+                      updateInfo,
+                      isForce: updateInfo.isForceUpdateRequired(currentAppVersion),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('SpyEar is up to date! (v1.2.1)'),
+                        backgroundColor: AppColors.liveGreen,
+                      ),
+                    );
+                  }
+                }
+              },
             ),
           ]),
           const SizedBox(height: 48),
